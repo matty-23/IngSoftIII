@@ -1,5 +1,5 @@
 import { Usuario } from './Usuario';
-export class Documento{
+export class Documento implements Componente{
     constructor(
         id : number,
         nombre: string,
