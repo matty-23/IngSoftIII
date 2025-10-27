@@ -1,5 +1,5 @@
 import { Usuario } from './Usuario';
-export class Documento implements Componente{
+export class Documento extends Componente{
     constructor(
         id : number,
         nombre: string,
@@ -8,5 +8,16 @@ export class Documento implements Componente{
         fechaCreacion: Date,
         fechaUltimaModificacion: Date,
     ){}
-    
+    buscarTexto(texto: string): number[]{
+        this.usuariosAutorizados.find(([usuario, nivelAcceso]) => nivelAcceso >= 1);
+        return [];
+    }
+    AnadirUsuario(usuario: Usuario, nivelAcceso: number): boolean{
+        
+        const resultado=this.usuariosAutorizados.push([usuario, nivelAcceso]);
+        if (resultado>0){
+        return true;}
+
+        return false;
+    }
 }

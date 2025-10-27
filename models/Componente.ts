@@ -1,7 +1,6 @@
-export abstract class Componente{
+export interface Componente{
     usuariosAutorizados : [Usuario,number][]=[];
-    constructor(
-        id : number,
-        nombre: string
-    ){}
+        id : number;
+        nombre: string;
+    
 }
