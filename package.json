@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/matty-23/IngSoftIII#readme",
   "devDependencies": {
+    "http-server": "^14.1.1",
     "typescript": "^5.9.3"
   }
 }
