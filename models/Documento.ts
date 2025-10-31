@@ -22,4 +22,12 @@ export class Documento implements Componente{
 
         return false;
     }
+    esUsuarioAutorizado(usuario: Usuario): boolean {
+    return this.usuariosAutorizados.some(([u, _]) => u.id === usuario.id);
+    }
+
+    editarContenido(nuevoContenido: string): boolean {
+    this.contenido= nuevoContenido;
+    return true;
+    }
 }
