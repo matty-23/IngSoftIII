@@ -1,0 +1,165 @@
+// src/presentation/controllers/FileController.ts
+import { Router, Request, Response } from 'express';
+import { FileService } from '../services/DocumentoServices';
+import { VersionService } from '../services/VersionService';
+import { PermissionService } from '../services/PermisosService';
+
+const router = Router();
+const fileService = new FileService();
+const versionService = new VersionService();
+const permissionService = new PermissionService();
+
+// CREATE archivo
+router.post('/', async (req: Request, res: Response) => {
+    try {
+        const { name, folderId, userId, content } = req.body;
+        
+        if (!name || !userId) {
+            return res.status(400).json({ error: 'name y userId son requeridos' });
+        }
+
+        const file = await fileService.createFile(name, folderId || null, userId, content);
+        
+        // Dar permiso de owner automáticamente
+        await permissionService.shareResource(
+            file.id,
+            'file',
+            userId,
+            'owner',
+            userId
+        );
+
+        res.status(201).json(file);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET archivo por ID
+router.get('/:id', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { userId } = req.query;
+
+        if (!userId) {
+            return res.status(400).json({ error: 'userId es requerido' });
+        }
+
+        // Verificar permiso de lectura (STRATEGY PATTERN)
+        const canRead = await permissionService.checkPermission(
+            userId as string,
+            id,
+            'read'
+        );
+
+        if (!canRead) {
+            return res.status(403).json({ error: 'No tienes permiso para leer este archivo' });
+        }
+
+        const file = await fileService.getFile(id);
+        if (!file) {
+            return res.status(404).json({ error: 'Archivo no encontrado' });
+        }
+
+        res.json(file);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// UPDATE contenido del archivo
+router.put('/:id', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { content, userId } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ error: 'userId es requerido' });
+        }
+
+        // Verificar permiso de escritura (STRATEGY PATTERN)
+        const canWrite = await permissionService.checkPermission(userId, id, 'write');
+        if (!canWrite) {
+            return res.status(403).json({ error: 'No tienes permiso para editar este archivo' });
+        }
+
+        const file = await fileService.updateContent(id, content, userId);
+        res.json(file);
+    } catch (error: any) {
+        if (error.message.includes('Conflicto de concurrencia')) {
+            return res.status(409).json({ error: error.message });
+        }
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// DELETE archivo
+router.delete('/:id', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { userId } = req.query;
+
+        if (!userId) {
+            return res.status(400).json({ error: 'userId es requerido' });
+        }
+
+        // Verificar permiso de eliminación (STRATEGY PATTERN)
+        const canDelete = await permissionService.checkPermission(
+            userId as string,
+            id,
+            'delete'
+        );
+
+        if (!canDelete) {
+            return res.status(403).json({ error: 'No tienes permiso para eliminar este archivo' });
+        }
+
+        await fileService.deleteFile(id, userId as string);
+        res.status(204).send();
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET historial de versiones
+router.get('/:id/versions', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const versions = await versionService.getVersionHistory(id);
+        res.json(versions);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// POST restaurar versión
+router.post('/:id/restore', async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { versionId, userId } = req.body;
+
+        if (!versionId || !userId) {
+            return res.status(400).json({ error: 'versionId y userId son requeridos' });
+        }
+
+        await versionService.restoreVersion(id, versionId, userId);
+        res.json({ message: 'Versión restaurada exitosamente' });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// GET archivos de una carpeta (o root)
+router.get('/folder/:folderId', async (req: Request, res: Response) => {
+    try {
+        const { folderId } = req.params;
+        const files = await fileService.listByFolder(
+            folderId === 'root' ? null : folderId
+        );
+        res.json(files);
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+export default router;

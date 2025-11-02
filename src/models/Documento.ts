@@ -1,38 +1,44 @@
-import { Usuario } from './Usuario.js';
-import { Componente } from '../interfaces/Componente.js';
+import { IdleState } from './State';
+import { IFileState } from '../interfaces/IFileState';
+import { Componente } from '../interfaces/Componente';
 export class Documento implements Componente{
-    usuariosAutorizados: [Usuario, number][]=[];
-    id : number;
-    nombre: string;
-    contenido:string;
-    dueño:Usuario;
+    public state: IFileState;
     constructor(
-        Id:number,
-        Nombre:string,
-        dueño : Usuario,
-        contenido: string,
-    ){
-        this.id=Id;
-        this.nombre=Nombre;
-        this.contenido = contenido;
-        this.dueño = dueño;
-    }
-    AnadirUsuario(usuario: Usuario, nivelAcceso: number): boolean{     
-        const resultado=this.usuariosAutorizados.push([usuario, nivelAcceso]);
-        if (resultado>0){
-        return true;}
-
-        return false;
-    }
-    esUsuarioAutorizado(usuario: Usuario): boolean {
-      if (usuario.id === this.dueño.id) {
-    return true;
-    }
-    return this.usuariosAutorizados.some(([u, _]) => u.id === usuario.id);
+        public id: string,
+        public name: string,
+        public content: string,
+        public ownerId: number,
+        public folderId: number | null,
+        state?: IFileState
+    ) {
+        this.state = state || new IdleState();
     }
 
-    editarContenido(nuevoContenido: string): boolean {
-    this.contenido= nuevoContenido;
-    return true;
+    getSize(): number {
+        return this.content.length;
+    }
+
+    getType(): 'file' {
+        return 'file';
+    }
+
+    // PROTOTYPE PATTERN: Clonar para crear versión
+    clone(): Documento {
+        return new Documento(
+            this.id,
+            this.name,
+            this.content,
+            this.ownerId,
+            this.folderId,
+            this.state
+        );
+    }
+
+    canEdit(): boolean {
+        return this.state.canEdit();
+    }
+
+    canDelete(): boolean {
+        return this.state.canDelete();
     }
 }

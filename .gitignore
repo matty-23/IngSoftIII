@@ -1,5 +1,6 @@
 # Ignorar la carpeta node_modules
 node_modules/
+dist/
 
 # Ignorar archivos de log
 *.log
