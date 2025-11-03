@@ -14,5 +14,12 @@ const PermissionSchema = new Schema<IPermissionDocument>({
     userId: { type: String, required: true },
     role: { type: String, enum: ['owner', 'editor', 'viewer'], required: true }
 }, { timestamps: true });
+PermissionSchema.index(
+    { resourceId: 1, userId: 1 }, 
+    { unique: true }
+);
 
+// Índices adicionales
+PermissionSchema.index({ userId: 1 });
+PermissionSchema.index({ resourceId: 1, resourceType: 1 });
 export const PermissionModel = mongoose.model<IPermissionDocument>('Permission', PermissionSchema);
