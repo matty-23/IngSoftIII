@@ -5,7 +5,7 @@ import { connectDB } from './Infraestructura/database/conexion';
 import fileRoutes from './controllers/DocumentoController';
 import permissionRoutes from './controllers/PermisosController';
 import auditRoutes from './controllers/AuditoriaController';
-
+import folderRoutes from './controllers/DirectorioController'
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -23,7 +23,7 @@ app.use((req, res, next) => {
 app.use('/api/files', fileRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/audit', auditRoutes);
-
+app.use('/api/folders',folderRoutes);
 // Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date() });

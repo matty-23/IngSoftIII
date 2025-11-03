@@ -7,8 +7,8 @@ class Directorio implements Componente{
     constructor(
         public id: string,
         public name: string,
-        public ownerId: number,
-        public parentId: number | null
+        public ownerId: string,
+        public parentId: string | null
     ) {}
 
     add(node: Componente): void {
