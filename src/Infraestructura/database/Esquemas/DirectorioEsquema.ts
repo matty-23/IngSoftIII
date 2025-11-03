@@ -14,4 +14,14 @@ const FolderSchema = new Schema<IFolderDocument>({
     ownerId: { type: String, required: true }
 }, { timestamps: true });
 
+FolderSchema.index({ ownerId: 1, parentId: 1 });
+FolderSchema.index({ parentId: 1 });
+
+// Validación: No puede ser su propio padre
+FolderSchema.pre('save', function(next) {
+    if (this.parentId && this._id.equals(this.parentId)) {
+        next(new Error('Una carpeta no puede ser su propio padre'));
+    }
+    next();
+});
 export const FolderModel = mongoose.model<IFolderDocument>('Folder', FolderSchema);
