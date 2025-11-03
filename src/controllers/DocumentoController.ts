@@ -12,13 +12,13 @@ const permissionService = new PermissionService();
 // CREATE archivo
 router.post('/', async (req: Request, res: Response) => {
     try {
-        const { name, folderId, userId, content } = req.body;
+        const { name, folderId, userId} = req.body;
         
         if (!name || !userId) {
             return res.status(400).json({ error: 'name y userId son requeridos' });
         }
 
-        const file = await fileService.createFile(name, folderId || null, userId, content);
+        const file = await fileService.createFile(name, folderId || null, userId);
         
         // Dar permiso de owner automáticamente
         await permissionService.shareResource(

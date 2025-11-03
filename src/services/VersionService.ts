@@ -16,7 +16,7 @@ export class VersionService {
         // Crear versión inicial cuando se crea un archivo
         this.eventBus.on('FileCreated', async (event: FileCreatedEvent) => {
             console.log('📜 [VersionService] Creando versión inicial...');
-            await this.createVersion(event.fileId, '', event.userId, 1);
+            await this.createVersion(event.fileId, ' ', event.userId, 1);
         });
 
         // Crear nueva versión cuando se guarda
@@ -47,7 +47,7 @@ export class VersionService {
     // Ver historial de versiones
     async getVersionHistory(fileId: string): Promise<any[]> {
         const versions = await VersionModel.find({ fileId }).sort({ versionNumber: -1 });
-        return versions.map(v => ({
+        return versions.map( v => ({
             id: v._id,
             versionNumber: v.versionNumber,
             content: v.content,

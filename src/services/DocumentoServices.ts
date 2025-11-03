@@ -18,7 +18,7 @@ export class FileService {
             name,
             folderId,
             ownerId: userId,
-            content: '',
+            content: ' ',
             state: 'idle',
             version: 1
         });
