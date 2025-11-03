@@ -17,5 +17,7 @@ const AuditLogSchema = new Schema<IAuditLogDocument>({
     resourceName: { type: String, required: true },
     timestamp: { type: Date, default: Date.now }
 });
-
+// Índices para mejorar rendimiento
+AuditLogSchema.index({ userId: 1, timestamp: -1 });
+AuditLogSchema.index({ resourceId: 1 });
 export const AuditLogModel = mongoose.model<IAuditLogDocument>('AuditLog', AuditLogSchema);
