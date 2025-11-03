@@ -1,0 +1,106 @@
+
+import { connectDB, disconnectDB } from './conexion';
+import { FileModel } from './Esquemas/DocumentoEsquema';
+import { FolderModel } from './Esquemas/DirectorioEsquema';
+import { PermissionModel } from './Esquemas/PermisosEsquema';
+import { VersionModel } from './Esquemas/VersionEsquema';
+import { AuditLogModel } from './Esquemas/AuditoriaEsquema';
+
+async function testDatabase() {
+    console.log('🧪 Iniciando prueba de base de datos...\n');
+    
+    try {
+        await connectDB();
+        
+        // 1. Limpiar colecciones (solo para testing)
+        console.log('🧹 Limpiando colecciones...');
+        await Promise.all([
+            FileModel.deleteMany({}),
+            FolderModel.deleteMany({}),
+            PermissionModel.deleteMany({}),
+            VersionModel.deleteMany({}),
+            AuditLogModel.deleteMany({})
+        ]);
+        console.log('✅ Colecciones limpiadas\n');
+        
+        // 2. Crear carpeta raíz
+        console.log('📁 Creando carpeta de prueba...');
+        const folder = await FolderModel.create({
+            name: 'Carpeta Test',
+            parentId: null,
+            ownerId: 'user-test-123'
+        });
+        console.log('✅ Carpeta creada:', folder.name, '\n');
+        
+        // 3. Crear archivo
+        console.log('📄 Creando archivo de prueba...');
+        const file = await FileModel.create({
+            name: 'documento-test.txt',
+            content: 'Este es un contenido de prueba',
+            folderId: folder._id,
+            ownerId: 'user-test-123',
+            state: 'idle',
+            version: 1
+        });
+        console.log('✅ Archivo creado:', file.name);
+        console.log('   Tamaño:', file.size, 'bytes\n');
+        
+        // 4. Crear permiso
+        console.log('🔐 Creando permiso de prueba...');
+        const permission = await PermissionModel.create({
+            resourceId: file._id,
+            resourceType: 'file',
+            userId: 'user-test-123',
+            role: 'owner',
+            grantedBy: 'system'
+        });
+        console.log('✅ Permiso creado:', permission.role, '\n');
+        
+        // 5. Crear versión
+        console.log('📝 Creando versión de prueba...');
+        const version = await VersionModel.create({
+            fileId: file._id,
+            versionNumber: 1,
+            content: file.content,
+            createdBy: 'user-test-123'
+        });
+        console.log('✅ Versión creada: v' + version.versionNumber);
+        console.log('   Tamaño:', version.size, 'bytes\n');
+        
+        // 6. Crear log de auditoría
+        console.log('📋 Creando log de auditoría...');
+        const audit = await AuditLogModel.create({
+            userId: 'user-test-123',
+            action: 'create',
+            resourceId: file._id,
+            resourceType: 'file',
+            resourceName: file.name
+        });
+        console.log('✅ Auditoría creada:', audit.action, '\n');
+        
+        // 7. Verificar datos
+        console.log('🔍 Verificando datos...');
+        const fileCount = await FileModel.countDocuments();
+        const folderCount = await FolderModel.countDocuments();
+        const permissionCount = await PermissionModel.countDocuments();
+        const versionCount = await VersionModel.countDocuments();
+        const auditCount = await AuditLogModel.countDocuments();
+        
+        console.log('📊 Estadísticas:');
+        console.log('   Archivos:', fileCount);
+        console.log('   Carpetas:', folderCount);
+        console.log('   Permisos:', permissionCount);
+        console.log('   Versiones:', versionCount);
+        console.log('   Logs auditoría:', auditCount);
+        
+        console.log('\n✅ ¡Prueba completada exitosamente!');
+        
+    } catch (error) {
+        console.error('❌ Error en la prueba:', error);
+    } finally {
+        await disconnectDB();
+    }
+}
+
+// Ejecutar
+testDatabase();
