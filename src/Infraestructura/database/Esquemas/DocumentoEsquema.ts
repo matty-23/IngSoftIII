@@ -19,5 +19,7 @@ const FileSchema = new Schema<IFileDocument>({
     state: { type: String, enum: ['idle', 'open', 'editing'], default: 'idle' },
     version: { type: Number, default: 1 }
 }, { timestamps: true });
-
+FileSchema.index({ ownerId: 1, folderId: 1 });
+FileSchema.index({ folderId: 1 });
+FileSchema.index({ name: 'text' });
 export const FileModel = mongoose.model<IFileDocument>('File', FileSchema);
