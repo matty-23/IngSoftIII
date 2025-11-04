@@ -1,7 +1,8 @@
 import { Directorio } from './Directorio';
 import { Componente } from '../interfaces/Componente';
-import { ISharedReference } from '../interfaces/ISharedReference';
+import { ISharedReference } from '../Infraestructura/database/Esquemas/ISharedReference';
 import { FolderModel } from '../Infraestructura/database/Esquemas/DirectorioEsquema';
+import { SharedReferenceModel } from '../Infraestructura/database/Esquemas/ISharedReference';
 import { permission } from 'process';
 
 export class Compartidos extends Directorio {
@@ -15,10 +16,11 @@ export class Compartidos extends Directorio {
         super(id, 'Compartidos', ownerId, null);
     }
 
-    addReference(targetId: string, permission:number): void {
+    addReference(targetId: string, permission:number,ownerId:string,sharedWithId:string): void {
         // Evitar duplicados
         if (!this.references.some(ref => ref.targetId == targetId)) {
-            this.references.push({ targetId, permission });
+            const ref = new SharedReferenceModel({ targetId, ownerId, sharedWithId, permission });
+            this.references.push(ref);
         }
     }
     getPermisoArchivo(targetId:string):string{
