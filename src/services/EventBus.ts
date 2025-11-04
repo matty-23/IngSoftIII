@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 
-// SINGLETON PATTERN
+
 export class EventBus {
     private static instance: EventBus;
     private emitter: EventEmitter;

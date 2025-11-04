@@ -2,9 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import { connectDB } from './Infraestructura/database/conexion';
 import fileRoutes from './controllers/DocumentoController';
-import permissionRoutes from './controllers/PermisosController';
 import auditRoutes from './controllers/AuditoriaController';
-
+import folderRoutes from './controllers/DirectorioController';
+import userRoutes from './controllers/UsuarioController';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -20,8 +20,9 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/files', fileRoutes);
-app.use('/api/permissions', permissionRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/folders', folderRoutes);
+app.use('/api/users', userRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

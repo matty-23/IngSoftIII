@@ -19,7 +19,7 @@ FolderSchema.index({ parentId: 1 });
 
 // Validación: No puede ser su propio padre
 FolderSchema.pre('save', function(next) {
-    if (this.parentId && this._id.equals(this.parentId)) {
+    if (this.parentId && this.id.equals(this.parentId)) {
         next(new Error('Una carpeta no puede ser su propio padre'));
     }
     next();

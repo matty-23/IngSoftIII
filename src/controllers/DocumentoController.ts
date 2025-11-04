@@ -2,12 +2,10 @@
 import { Router, Request, Response } from 'express';
 import { FileService } from '../services/DocumentoServices';
 import { VersionService } from '../services/VersionService';
-import { PermissionService } from '../services/PermisosService';
 
 const router = Router();
 const fileService = new FileService();
 const versionService = new VersionService();
-const permissionService = new PermissionService();
 
 // CREATE archivo
 router.post('/', async (req: Request, res: Response) => {
@@ -20,14 +18,14 @@ router.post('/', async (req: Request, res: Response) => {
 
         const file = await fileService.createFile(name, folderId || null, userId);
         
-        // Dar permiso de owner automáticamente
-        await permissionService.shareResource(
-            file.id,
-            'file',
-            userId,
-            'owner',
-            userId
-        );
+        // // Dar permiso de owner automáticamente
+        // await permissionService.shareResource(
+        //     file.id,
+        //     'file',
+        //     userId,
+        //     'owner',
+        //     userId
+        // );
 
         res.status(201).json(file);
     } catch (error: any) {
@@ -45,16 +43,16 @@ router.get('/:id', async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'userId es requerido' });
         }
 
-        // Verificar permiso de lectura (STRATEGY PATTERN)
-        const canRead = await permissionService.checkPermission(
-            userId as string,
-            id,
-            'read'
-        );
+        // // Verificar permiso de lectura (STRATEGY PATTERN)
+        // const canRead = await permissionService.checkPermission(
+        //     userId as string,
+        //     id,
+        //     'read'
+        // );
 
-        if (!canRead) {
-            return res.status(403).json({ error: 'No tienes permiso para leer este archivo' });
-        }
+        // if (!canRead) {
+        //     return res.status(403).json({ error: 'No tienes permiso para leer este archivo' });
+        // }
 
         const file = await fileService.getFile(id);
         if (!file) {
@@ -78,10 +76,10 @@ router.put('/:id', async (req: Request, res: Response) => {
         }
 
         // Verificar permiso de escritura (STRATEGY PATTERN)
-        const canWrite = await permissionService.checkPermission(userId, id, 'write');
+ /*        const canWrite = await permissionService.checkPermission(userId, id, 'write');
         if (!canWrite) {
             return res.status(403).json({ error: 'No tienes permiso para editar este archivo' });
-        }
+        } */
 
         const file = await fileService.updateContent(id, content, userId);
         res.json(file);
@@ -103,7 +101,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'userId es requerido' });
         }
 
-        // Verificar permiso de eliminación (STRATEGY PATTERN)
+       /*  // Verificar permiso de eliminación (STRATEGY PATTERN)
         const canDelete = await permissionService.checkPermission(
             userId as string,
             id,
@@ -112,7 +110,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 
         if (!canDelete) {
             return res.status(403).json({ error: 'No tienes permiso para eliminar este archivo' });
-        }
+        } */
 
         await fileService.deleteFile(id, userId as string);
         res.status(204).send();

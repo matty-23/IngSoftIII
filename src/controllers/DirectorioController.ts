@@ -1,29 +1,18 @@
 // src/controllers/FolderController.ts
 import { Router, Request, Response } from 'express';
-import { FolderModel } from '../Infraestructura/database/Esquemas/DirectorioEsquema';
-import { PermissionService } from '../services/PermisosService';
+import { FolderService } from '../services/DirectorioServise';
 
 const router = Router();
-const permissionService = new PermissionService();
+const folderService = new FolderService();
 
 // CREATE carpeta
 router.post('/', async (req: Request, res: Response) => {
     try {
         const { name, parentId, userId } = req.body;
-       
-        if (!name || !userId) {
-            return res.status(400).json({ error: 'name y userId son requeridos' });
-        }
-
-        const folder = await FolderModel.create({
-            name,
-            parentId: parentId || null,
-            ownerId: userId
-        });
-
+        const folder = await folderService.createFolder(name, parentId || null, userId);
         res.status(201).json(folder);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        res.status(400).json({ error: error.message });
     }
 });
 
@@ -31,9 +20,7 @@ router.post('/', async (req: Request, res: Response) => {
 router.get('/', async (req: Request, res: Response) => {
     try {
         const { parentId } = req.query;
-        const folders = await FolderModel.find({
-            parentId: parentId === 'root' ? null : parentId
-        });
+        const folders = await folderService.listFolders(parentId as string);
         res.json(folders);
     } catch (error: any) {
         res.status(500).json({ error: error.message });
