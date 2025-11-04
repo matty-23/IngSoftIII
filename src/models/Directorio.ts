@@ -40,5 +40,3 @@ export class Directorio implements Componente{
     }
 }
 
-    
-        

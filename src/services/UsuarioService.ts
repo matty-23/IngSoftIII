@@ -6,63 +6,75 @@ import mongoose from 'mongoose';
 export class UsuarioService {
     // Crear un nuevo usuario
     async crearUsuario(nombreUsuario: string, email: string): Promise<Usuario> {
-        
-        if (!nombreUsuario || !email) {
-            throw new Error('nombreUsuario y email son requeridos');
-        }
+  if (!nombreUsuario || !email) {
+    throw new Error('nombreUsuario y email son requeridos');
+  }
 
-        // Verificar si ya existe un usuario con el mismo email
-        const existente = await UsuarioModel.findOne({ email });
-        if (existente) {
-            throw new Error('Ya existe un usuario con ese email');
-        }
+  const existente = await UsuarioModel.findOne({ email });
+  if (existente) {
+    throw new Error('Ya existe un usuario con ese email');
+  }
 
-    const session = await mongoose.startSession();
-    session.startTransaction();
+  const session = await mongoose.startSession();
+session.startTransaction();
 
-    try {
-      // 1. Crear usuario
-      const usuarioDoc = await UsuarioModel.create(
-        [{ nombreUsuario, email }],
-        { session }
-      );
+try {
+  // 1. Crear usuario
+  const usuarioDoc = await UsuarioModel.create([{ nombreUsuario, email }], { session });
 
-      // 2. Crear carpeta personal (con permisos si usas permissionSetId)
-      const carpetaDoc = await FolderModel.create(
-        [{
-          nombre: `root_${nombreUsuario}`,
-          ownerId: usuarioDoc[0]._id,
-          parentId: null,
-        }],
-        { session }
-      );
+  // 2. Crear carpeta raíz
+  const carpetaRaizDoc = await FolderModel.create(
+    [{
+      name: `Mi Unidad`,
+      ownerId: usuarioDoc[0]._id,
+      parentId: null,
+      type: 'normal'
+    }],
+    { session }
+  );
 
-      // 3. Asignar carpeta al usuario
-      await UsuarioModel.updateOne(
-        { _id: usuarioDoc[0]._id },
-        { carpetaPersonal: carpetaDoc[0]._id },
-        { session }
-      );
+  // 3. Crear carpeta "Compartidos Conmigo"
+  const carpetaCompartidosDoc = await FolderModel.create(
+    [{
+      name: 'Compartidos Conmigo',
+      ownerId: usuarioDoc[0]._id,
+      parentId: null,
+      type: 'shared'
+    }],
+    { session }
+  );
 
-      // 4. Confirmar transacción
-      await session.commitTransaction();
-      session.endSession();
+  // 4. Asignar carpetas al usuario
+  await UsuarioModel.updateOne(
+    { _id: usuarioDoc[0]._id },
+    { 
+      carpetaPersonal: carpetaRaizDoc[0]._id,
+      carpetaCompartidos: carpetaCompartidosDoc[0]._id
+    },
+    { session }
+  );
 
-      // 5. Devolver modelo de dominio
-      return new Usuario(
-        usuarioDoc[0].id.toString(),
-        usuarioDoc[0].nombreUsuario,
-        usuarioDoc[0].email,
-        usuarioDoc[0].createdAt,
-        usuarioDoc[0].updatedAt,
-        carpetaDoc[0].id.toString()
-      );
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-      throw new Error(`Error al crear usuario: ${error}`);
-    }
-    }
+  // 5. Confirmar transacción
+  await session.commitTransaction();
+  session.endSession();
+
+  // 6. Devolver instancia de tu clase Usuario
+  return new Usuario(
+    usuarioDoc[0].id.toString(),
+    usuarioDoc[0].nombreUsuario,
+    usuarioDoc[0].email,
+    usuarioDoc[0].createdAt,
+    usuarioDoc[0].updatedAt,
+    carpetaRaizDoc[0].id.toString()
+  );
+
+} catch (error) {
+  await session.abortTransaction();
+  session.endSession();
+  throw new Error(`Error al crear usuario: ${error}`);
+}
+
+}
 
     // Obtener todos los usuarios
     async obtenerUsuarios(): Promise<Usuario[]> {
