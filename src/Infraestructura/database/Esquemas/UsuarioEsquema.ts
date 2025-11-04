@@ -1,5 +1,4 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
-import { DirectorioModel } from '../../models/Directorio'; // 👈 Importá el modelo, no solo la interfaz
 
 export interface IUsuario extends Document {
   nombreUsuario: string;
@@ -25,24 +24,6 @@ const UsuarioSchema = new Schema<IUsuario>(
 UsuarioSchema.index({ email: 1 }, { unique: true });
 UsuarioSchema.index({ nombreUsuario: 'text' });
 
-// 🧩 Hook: crear automáticamente un directorio personal al crear un usuario
-UsuarioSchema.post('save', async function (usuario) {
-  try {
-    if (usuario.carpetaPersonal) return; // ya tiene asignada una
-
-    // Crear directorio base
-    const carpetaBase = await DirectorioModel.create({
-      nombre: `root_${usuario.nombreUsuario}`,
-      ownerId: usuario._id
-    });
-
-    // Asignar la carpeta y guardar el usuario
-    usuario.carpetaPersonal = carpetaBase._id;
-    await usuario.save();
-  } catch (err) {
-    console.error('Error al crear carpeta personal del usuario:', err);
-  }
-});
 
 // Export del modelo
 export const UsuarioModel: Model<IUsuario> = mongoose.model<IUsuario>('Usuario', UsuarioSchema);

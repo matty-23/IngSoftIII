@@ -1,7 +1,7 @@
 import { Componente } from "../interfaces/Componente";
 import { Usuario } from "./Usuario";
 
-class Directorio implements Componente{
+export class Directorio implements Componente{
     private children: Componente[] = [];
 
     constructor(

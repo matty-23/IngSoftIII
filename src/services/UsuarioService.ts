@@ -1,9 +1,12 @@
 import { UsuarioModel } from '../Infraestructura/database/Esquemas/UsuarioEsquema';
 import { Usuario } from '../models/Usuario';
+import { FolderModel } from '../Infraestructura/database/Esquemas/DirectorioEsquema';
+import mongoose from 'mongoose';
 
 export class UsuarioService {
     // Crear un nuevo usuario
     async crearUsuario(nombreUsuario: string, email: string): Promise<Usuario> {
+        
         if (!nombreUsuario || !email) {
             throw new Error('nombreUsuario y email son requeridos');
         }
@@ -14,31 +17,65 @@ export class UsuarioService {
             throw new Error('Ya existe un usuario con ese email');
         }
 
-        const nuevoUsuario = await UsuarioModel.create({
-            nombreUsuario,
-            email
-        });
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-        return new Usuario(
-            nuevoUsuario._id.toString(),
-            nuevoUsuario.nombreUsuario,
-            nuevoUsuario.email,
-            nuevoUsuario.createdAt,
-            nuevoUsuario.updatedAt
-        );
+    try {
+      // 1. Crear usuario
+      const usuarioDoc = await UsuarioModel.create(
+        [{ nombreUsuario, email }],
+        { session }
+      );
+
+      // 2. Crear carpeta personal (con permisos si usas permissionSetId)
+      const carpetaDoc = await FolderModel.create(
+        [{
+          nombre: `root_${nombreUsuario}`,
+          ownerId: usuarioDoc[0]._id,
+          parentId: null,
+        }],
+        { session }
+      );
+
+      // 3. Asignar carpeta al usuario
+      await UsuarioModel.updateOne(
+        { _id: usuarioDoc[0]._id },
+        { carpetaPersonal: carpetaDoc[0]._id },
+        { session }
+      );
+
+      // 4. Confirmar transacción
+      await session.commitTransaction();
+      session.endSession();
+
+      // 5. Devolver modelo de dominio
+      return new Usuario(
+        usuarioDoc[0].id.toString(),
+        usuarioDoc[0].nombreUsuario,
+        usuarioDoc[0].email,
+        usuarioDoc[0].createdAt,
+        usuarioDoc[0].updatedAt,
+        carpetaDoc[0].id.toString()
+      );
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw new Error(`Error al crear usuario: ${error}`);
+    }
     }
 
     // Obtener todos los usuarios
     async obtenerUsuarios(): Promise<Usuario[]> {
         const usuarios = await UsuarioModel.find();
         return usuarios.map(u => new Usuario(
-            u._id.toString(),
+            u.id.toString(),
             u.nombreUsuario,
             u.email,
             u.createdAt,
-            u.updatedAt
-        ));
-    }
+            u.updatedAt,
+            u.carpetaPersonal?.toString()
+        ));}
+    
 
     // Obtener usuario por ID
     async obtenerUsuarioPorId(id: string): Promise<Usuario> {
@@ -47,13 +84,14 @@ export class UsuarioService {
             throw new Error('Usuario no encontrado');
         }
         return new Usuario(
-            usuario._id.toString(),
+            usuario.id.toString(),
             usuario.nombreUsuario,
             usuario.email,
             usuario.createdAt,
-            usuario.updatedAt
-        );
-    }
+            usuario.updatedAt,
+            usuario.carpetaPersonal?.toString()
+        );}
+     
 
     // Actualizar usuario
     async actualizarUsuario(id: string, nombreUsuario?: string, email?: string): Promise<Usuario> {
@@ -68,11 +106,12 @@ export class UsuarioService {
         }
 
         return new Usuario(
-            usuario._id.toString(),
+            usuario.id.toString(),
             usuario.nombreUsuario,
             usuario.email,
             usuario.createdAt,
-            usuario.updatedAt
+            usuario.updatedAt,
+            usuario.carpetaPersonal?.toString()
         );
     }
 
