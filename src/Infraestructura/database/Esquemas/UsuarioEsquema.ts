@@ -7,7 +7,7 @@ export interface IUsuario extends Document {
   createdAt?: Date;
   updatedAt?: Date;
   carpetaPersonal?: mongoose.Types.ObjectId; // referencia al Directorio
-  carpetaCompartido?: mongoose.Types.ObjectId; // referencia al Directorio
+  carpetaCompartidoId?: mongoose.Types.ObjectId; // referencia al Directorio
 }
 
 // Esquema de Usuario
@@ -17,7 +17,7 @@ const UsuarioSchema = new Schema<IUsuario>(
     email: { type: String, required: true, unique: true, trim: true },
     estado: { type: String, enum: ['activo', 'inactivo'], default: 'activo' },
     carpetaPersonal: { type: mongoose.Schema.Types.ObjectId, ref: 'Directorio' }, // relación
-    carpetaCompartido: { type: mongoose.Schema.Types.ObjectId, ref: 'Compartidos' } // relación
+    carpetaCompartidoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Compartidos' } // relación
   },
   { timestamps: true }
 );

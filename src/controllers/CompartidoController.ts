@@ -8,6 +8,7 @@ const router = Router();
 router.post('/compartir', async (req: Request, res: Response) => {
   try {
     const { ownerId, targetId, destinatarioEmail, permiso } = req.body;
+    console.log("📤 Enviando datos a /compartidos/compartir:", { ownerId, targetId, destinatarioEmail, permiso });
     const ref = await CompartirService.compartirRecurso(ownerId, targetId, destinatarioEmail, permiso);
     res.status(201).json({ message: 'Recurso compartido exitosamente', ref });
   } catch (error: any) {

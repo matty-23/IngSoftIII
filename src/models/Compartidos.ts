@@ -18,7 +18,6 @@ export class Compartidos extends Directorio {
     }
 
     async addReference(targetId: string, ref:ISharedReference): Promise<void> {
-        // Evitar duplicados
         if (!this.references.some(ref => ref.targetId == targetId)) {
             this.references.push(ref);}
     }

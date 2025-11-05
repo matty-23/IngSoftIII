@@ -34,35 +34,40 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // GET archivo por ID
+// GET archivo por ID (propio o compartido)
 router.get('/:id', async (req: Request, res: Response) => {
-    try {
-        const { id } = req.params;
-        const { userId } = req.query;
+  try {
+    const { id } = req.params;
+    const { userId } = req.query;
 
-        if (!userId) {
-            return res.status(400).json({ error: 'userId es requerido' });
-        }
-
-        // // Verificar permiso de lectura (STRATEGY PATTERN)
-        // const canRead = await permissionService.checkPermission(
-        //     userId as string,
-        //     id,
-        //     'read'
-        // );
-
-        // if (!canRead) {
-        //     return res.status(403).json({ error: 'No tienes permiso para leer este archivo' });
-        // }
-
-        const file = await fileService.getFile(id);
-        if (!file) {
-            return res.status(404).json({ error: 'Archivo no encontrado' });
-        }
-
-        res.json(file);
-    } catch (error: any) {
-        res.status(500).json({ error: error.message });
+    if (!userId) {
+      return res.status(400).json({ error: 'userId es requerido' });
     }
+
+    // 1️⃣ Buscar el archivo
+    const file = await fileService.getFile(id);
+    if (!file) {
+      return res.status(404).json({ error: 'Archivo no encontrado' });
+    }
+
+    // 2️⃣ Verificar si el usuario es el dueño o si tiene acceso compartido
+    const { SharedReferenceModel } = await import('../Infraestructura/database/Esquemas/ISharedReference');
+
+    const esPropietario = file.ownerId.toString() === userId;
+    const referenciaCompartida = await SharedReferenceModel.findOne({
+      targetId: id,
+      sharedWithId: userId,
+    });
+
+    if (!esPropietario && !referenciaCompartida) {
+      return res.status(403).json({ error: 'No tienes permiso para acceder a este archivo' });
+    }
+
+    // 3️⃣ Si pasa las verificaciones, devolver el archivo completo
+    res.json(file);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // UPDATE contenido del archivo

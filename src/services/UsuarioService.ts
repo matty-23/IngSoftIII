@@ -49,7 +49,7 @@ try {
     { _id: usuarioDoc[0]._id },
     { 
       carpetaPersonal: carpetaRaizDoc[0]._id,
-      carpetaCompartidos: carpetaCompartidosDoc[0]._id
+      carpetaCompartidoId: carpetaCompartidosDoc[0]._id
     },
     { session }
   );
@@ -87,7 +87,7 @@ try {
             u.createdAt,
             u.updatedAt,
             u.carpetaPersonal?.toString(),
-            u.carpetaCompartido?.toString()
+            u.carpetaCompartidoId?.toString()
         ));}
     
 
@@ -104,9 +104,27 @@ try {
             usuario.createdAt,
             usuario.updatedAt,
             usuario.carpetaPersonal?.toString(),
-            usuario.carpetaCompartido?.toString()
+            usuario.carpetaCompartidoId?.toString()
         );}
-     
+        async obtenerUsuarioPorEmail(mail: string): Promise<Usuario> {
+            // Buscar el usuario por su email
+            const usuario = await UsuarioModel.findOne({ email: mail });
+
+            if (!usuario) {
+                throw new Error('Usuario no encontrado');
+            }
+
+            // Retornar una instancia de tu clase de dominio Usuario
+            return new Usuario(
+                usuario.id.toString(),
+                usuario.nombreUsuario,
+                usuario.email,
+                usuario.createdAt,
+                usuario.updatedAt,
+                usuario.carpetaPersonal?.toString(),
+                usuario.carpetaCompartidoId?.toString()
+            );
+        }
 
     // Actualizar usuario
     async actualizarUsuario(id: string, nombreUsuario?: string, email?: string): Promise<Usuario> {
@@ -127,7 +145,7 @@ try {
             usuario.createdAt,
             usuario.updatedAt,
             usuario.carpetaPersonal?.toString(),
-            usuario.carpetaCompartido?.toString()
+            usuario.carpetaCompartidoId?.toString()
         );
     }
 
