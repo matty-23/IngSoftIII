@@ -5,6 +5,7 @@ import fileRoutes from './controllers/DocumentoController';
 import auditRoutes from './controllers/AuditoriaController';
 import folderRoutes from './controllers/DirectorioController';
 import userRoutes from './controllers/UsuarioController';
+import compartRoutes from './controllers/CompartidoController';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,7 +25,7 @@ app.use('/api/files', fileRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/folders', folderRoutes);
 app.use('/api/users', userRoutes);
-
+app.use('api/compartidos', compartRoutes);
 // Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date() });

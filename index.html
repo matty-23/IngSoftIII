@@ -594,17 +594,48 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000/api';
-        let currentUserId = 'user-' + Math.random().toString(36).substr(2, 9);
-        let currentFolderId = null;
-        let currentView = 'grid';
-        let currentFileId = null;
+    const API_URL = 'http://localhost:3000/api';
+    let currentUser = null;
+    let currentFolderId = null;
+    let currentView = 'grid';
+    let currentFileId = null;
 
-        document.getElementById('userIdDisplay').textContent = currentUserId;
+    // --- NUEVO: inicialización de usuario ---
+    async function initUser() {
+        try {
+            // Buscar usuarios existentes
+            const response = await fetch(`${API_URL}/usuarios`);
+            const usuarios = await response.json();
 
-        // Initialize
-        loadFiles();
+            if (usuarios.length === 0) {
+                // Crear usuario por defecto si no hay ninguno
+                const nuevo = await fetch(`${API_URL}/usuarios`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nombreUsuario: 'UsuarioDemo',
+                        email: 'usuario@example.com'
+                    })
+                });
+                currentUser = await nuevo.json();
+            } else {
+                // Tomar el primero (podés hacer login real más adelante)
+                currentUser = usuarios[0];
+            }
 
+            // Mostrar el usuario en la interfaz
+            document.getElementById('userIdDisplay').textContent = currentUser.nombreUsuario + ' (' + currentUser.email + ')';
+            document.querySelector('.user-avatar').textContent = currentUser.nombreUsuario[0].toUpperCase();
+
+            // Cargar su carpeta raíz
+            await loadFiles(currentUser.carpetaPersonalId);
+
+        } catch (error) {
+            console.error('Error inicializando usuario:', error);
+            alert('Error al inicializar el usuario. Verifica el backend.');
+        }
+    }
+        initUser();
         async function loadFiles(folderId = null) {
             showLoading();
             currentFolderId = folderId;
@@ -846,8 +877,27 @@
         }
 
         async function loadShared() {
-            alert('Funcionalidad de archivos compartidos en desarrollo');
+            showLoading();
+
+            try {
+                const response = await fetch(`${API_URL}/compartidos/${currentUserId}`);
+                const items = await response.json();
+
+                hideLoading();
+
+                if (items.length === 0) {
+                    showEmptyState();
+                } else {
+                    hideEmptyState();
+                    renderFiles(items);
+                }
+            } catch (error) {
+                console.error('Error loading shared:', error);
+                hideLoading();
+                alert('Error al cargar los compartidos.');
+            }
         }
+
 
         async function loadRecent() {
             alert('Funcionalidad de recientes en desarrollo');

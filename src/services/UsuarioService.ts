@@ -65,7 +65,8 @@ try {
     usuarioDoc[0].email,
     usuarioDoc[0].createdAt,
     usuarioDoc[0].updatedAt,
-    carpetaRaizDoc[0].id.toString()
+    carpetaRaizDoc[0].id.toString(),
+    carpetaCompartidosDoc[0].id.toString()
   );
 
 } catch (error) {
@@ -85,7 +86,8 @@ try {
             u.email,
             u.createdAt,
             u.updatedAt,
-            u.carpetaPersonal?.toString()
+            u.carpetaPersonal?.toString(),
+            u.carpetaCompartido?.toString()
         ));}
     
 
@@ -101,7 +103,8 @@ try {
             usuario.email,
             usuario.createdAt,
             usuario.updatedAt,
-            usuario.carpetaPersonal?.toString()
+            usuario.carpetaPersonal?.toString(),
+            usuario.carpetaCompartido?.toString()
         );}
      
 
@@ -123,7 +126,8 @@ try {
             usuario.email,
             usuario.createdAt,
             usuario.updatedAt,
-            usuario.carpetaPersonal?.toString()
+            usuario.carpetaPersonal?.toString(),
+            usuario.carpetaCompartido?.toString()
         );
     }
 

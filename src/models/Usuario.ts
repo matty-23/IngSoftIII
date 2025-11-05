@@ -6,6 +6,7 @@ export class Usuario {
     createdAt?: Date;
     updatedAt?: Date;
     carpetaPersonalId?: string;
+    carpetaCompartidoId?:string;
 
     constructor(
         id: string,
@@ -13,7 +14,8 @@ export class Usuario {
         email: string,
         createdAt?: Date,
         updatedAt?: Date,
-        carpetaPersonalId?:string
+        carpetaPersonalId?:string,
+        carpetaCompartidoId?:string,
     ) {
         this.id = id;
         this.nombreUsuario = nombreUsuario;
@@ -21,5 +23,6 @@ export class Usuario {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.carpetaPersonalId= carpetaPersonalId;
+        this.carpetaCompartidoId= carpetaCompartidoId;
     }
 }

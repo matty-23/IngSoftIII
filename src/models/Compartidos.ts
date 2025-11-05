@@ -8,7 +8,7 @@ import { permission } from 'process';
 
 export class Compartidos extends Directorio {
     private references: ISharedReference[] = [];
-
+    
     constructor(
         id: string,
         ownerId: string
@@ -17,12 +17,10 @@ export class Compartidos extends Directorio {
         super(id, 'Compartidos', ownerId, null);
     }
 
-    async addReference(targetId: string, permission:number,ownerId:string,sharedWithId:string): Promise<void> {
+    async addReference(targetId: string, ref:ISharedReference): Promise<void> {
         // Evitar duplicados
         if (!this.references.some(ref => ref.targetId == targetId)) {
-            const ref = await CompartirService.compartirRecurso(ownerId,targetId,sharedWithId,permission);//new SharedReferenceModel({ targetId, ownerId, sharedWithId, permission });
-            this.references.push(ref);
-        }
+            this.references.push(ref);}
     }
     getPermisoArchivo(targetId:string):string{
         const nivelPermiso=this.references.filter(ref => ref.targetId === targetId);
