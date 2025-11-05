@@ -17,7 +17,6 @@
             color: #202124;
         }
 
-        /* Header */
         .header {
             background: white;
             border-bottom: 1px solid #e0e0e0;
@@ -81,6 +80,21 @@
             gap: 12px;
         }
 
+        .user-info {
+            text-align: right;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #202124;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: #5f6368;
+        }
+
         .user-avatar {
             width: 32px;
             height: 32px;
@@ -94,13 +108,11 @@
             cursor: pointer;
         }
 
-        /* Main Layout */
         .main-container {
             display: flex;
             height: calc(100vh - 65px);
         }
 
-        /* Sidebar */
         .sidebar {
             width: 250px;
             background: white;
@@ -153,7 +165,6 @@
             color: #1967d2;
         }
 
-        /* Content Area */
         .content {
             flex: 1;
             overflow-y: auto;
@@ -205,7 +216,6 @@
             color: #1967d2;
         }
 
-        /* Files Grid */
         .files-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -288,7 +298,6 @@
             background: #f1f3f4;
         }
 
-        /* List View */
         .files-list {
             background: white;
             border-radius: 8px;
@@ -335,7 +344,6 @@
             font-size: 24px;
         }
 
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -378,12 +386,13 @@
             font-weight: 500;
         }
 
-        .form-group input, .form-group select {
+        .form-group input, .form-group select, .form-group textarea {
             width: 100%;
             padding: 10px;
             border: 1px solid #dadce0;
             border-radius: 4px;
             font-size: 14px;
+            font-family: inherit;
         }
 
         .modal-actions {
@@ -422,7 +431,6 @@
             background: #f8f9fa;
         }
 
-        /* Loading */
         .loading {
             text-align: center;
             padding: 40px;
@@ -458,10 +466,22 @@
             font-size: 16px;
             color: #5f6368;
         }
+
+        .error-message {
+            background: #fee;
+            color: #c00;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
         <div class="header-left">
             <div class="logo">
@@ -474,14 +494,15 @@
             </div>
         </div>
         <div class="user-section">
-            <span id="userIdDisplay" style="font-size: 12px; color: #5f6368;"></span>
-            <div class="user-avatar" title="Usuario actual">U</div>
+            <div class="user-info">
+                <div class="user-name" id="userName">Cargando...</div>
+                <div class="user-email" id="userEmail"></div>
+            </div>
+            <div class="user-avatar" id="userAvatar" title="Usuario actual">?</div>
         </div>
     </header>
 
-    <!-- Main Container -->
     <div class="main-container">
-        <!-- Sidebar -->
         <aside class="sidebar">
             <button class="new-button" onclick="showNewModal()">
                 <span>➕</span>
@@ -507,7 +528,6 @@
             </ul>
         </aside>
 
-        <!-- Content Area -->
         <main class="content">
             <div class="breadcrumb" id="breadcrumb">
                 <span class="breadcrumb-item" onclick="navigateToRoot()">Mi unidad</span>
@@ -523,14 +543,14 @@
                 </div>
             </div>
 
+            <div id="errorMessage" class="error-message"></div>
+
             <div id="loadingIndicator" class="loading" style="display: none;">
                 <div class="spinner"></div>
                 <div>Cargando...</div>
             </div>
 
-            <div id="filesContainer" class="files-grid">
-                <!-- Files will be loaded here -->
-            </div>
+            <div id="filesContainer" class="files-grid"></div>
 
             <div id="listContainer" class="files-list">
                 <div class="list-header">
@@ -540,9 +560,7 @@
                     <div>Tamaño</div>
                     <div>Acciones</div>
                 </div>
-                <div id="listItems">
-                    <!-- List items will be loaded here -->
-                </div>
+                <div id="listItems"></div>
             </div>
 
             <div id="emptyState" class="empty-state" style="display: none;">
@@ -552,7 +570,7 @@
         </main>
     </div>
 
-    <!-- New File/Folder Modal -->
+    <!-- Modal: Nuevo archivo/carpeta -->
     <div class="modal" id="newModal">
         <div class="modal-content">
             <div class="modal-header">Crear nuevo</div>
@@ -574,7 +592,7 @@
         </div>
     </div>
 
-    <!-- Edit File Modal -->
+    <!-- Modal: Editar archivo -->
     <div class="modal" id="editModal">
         <div class="modal-content">
             <div class="modal-header">Editar archivo</div>
@@ -584,7 +602,7 @@
             </div>
             <div class="form-group">
                 <label>Contenido</label>
-                <textarea id="editContent" style="width: 100%; height: 200px; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-family: monospace;"></textarea>
+                <textarea id="editContent" style="height: 200px; font-family: monospace;"></textarea>
             </div>
             <div class="modal-actions">
                 <button class="btn btn-secondary" onclick="closeEditModal()">Cancelar</button>
@@ -594,56 +612,79 @@
     </div>
 
     <script>
-    const API_URL = 'http://localhost:3000/api';
-    let currentUser = null;
-    let currentFolderId = null;
-    let currentView = 'grid';
-    let currentFileId = null;
+        const API_URL = 'http://localhost:3000/api';
+        let currentUser = null;
+        let currentFolderId = null;
+        let currentView = 'grid';
+        let currentFileId = null;
 
-    // --- NUEVO: inicialización de usuario ---
-    async function initUser() {
-        try {
-            // Buscar usuarios existentes
-            const response = await fetch(`${API_URL}/usuarios`);
-            const usuarios = await response.json();
+        // ===== GESTIÓN DE USUARIOS =====
+        
+        async function initUser() {
+            try {
+                showLoading();
+                
+                const response = await fetch(`${API_URL}/users`);
+                if (!response.ok) {
+                    throw new Error('Error al obtener usuarios');
+                }
+                
+                const usuarios = await response.json();
 
-            if (usuarios.length === 0) {
-                // Crear usuario por defecto si no hay ninguno
-                const nuevo = await fetch(`${API_URL}/usuarios`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        nombreUsuario: 'UsuarioDemo',
-                        email: 'usuario@example.com'
-                    })
-                });
-                currentUser = await nuevo.json();
-            } else {
-                // Tomar el primero (podés hacer login real más adelante)
-                currentUser = usuarios[0];
+                if (usuarios.length === 0) {
+                    // Crear usuario por defecto
+                    currentUser = await createDefaultUser();
+                } else {
+                    // Usar el primer usuario
+                    currentUser = usuarios[0];
+                }
+
+                updateUserUI();
+                await loadFiles(currentUser.carpetaPersonalId);
+                
+            } catch (error) {
+                console.error('Error inicializando usuario:', error);
+                showError('Error al inicializar el usuario. Verifica que el backend esté corriendo.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function createDefaultUser() {
+            const response = await fetch(`${API_URL}/users`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombreUsuario: 'Usuario Demo',
+                    email: 'usuario@archivosya.com'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al crear usuario por defecto');
             }
 
-            // Mostrar el usuario en la interfaz
-            document.getElementById('userIdDisplay').textContent = currentUser.nombreUsuario + ' (' + currentUser.email + ')';
-            document.querySelector('.user-avatar').textContent = currentUser.nombreUsuario[0].toUpperCase();
-
-            // Cargar su carpeta raíz
-            await loadFiles(currentUser.carpetaPersonalId);
-
-        } catch (error) {
-            console.error('Error inicializando usuario:', error);
-            alert('Error al inicializar el usuario. Verifica el backend.');
+            return await response.json();
         }
-    }
-        initUser();
+
+        function updateUserUI() {
+            if (!currentUser) return;
+            
+            document.getElementById('userName').textContent = currentUser.nombreUsuario;
+            document.getElementById('userEmail').textContent = currentUser.email;
+            document.getElementById('userAvatar').textContent = currentUser.nombreUsuario[0].toUpperCase();
+        }
+
+        // ===== GESTIÓN DE ARCHIVOS Y CARPETAS =====
+
         async function loadFiles(folderId = null) {
             showLoading();
-            currentFolderId = folderId;
+            currentFolderId = folderId || currentUser?.carpetaPersonalId;
 
             try {
                 const [files, folders] = await Promise.all([
-                    fetch(`${API_URL}/files/folder/${folderId || 'root'}`).then(r => r.json()),
-                    fetch(`${API_URL}/folders?parentId=${folderId || 'root'}`).then(r => r.json())
+                    fetch(`${API_URL}/files/folder/${currentFolderId || 'root'}`).then(r => r.json()),
+                    fetch(`${API_URL}/folders?parentId=${currentFolderId || 'root'}`).then(r => r.json())
                 ]);
 
                 hideLoading();
@@ -660,9 +701,9 @@
                     renderFiles(allItems);
                 }
             } catch (error) {
-                console.error('Error loading files:', error);
+                console.error('Error cargando archivos:', error);
                 hideLoading();
-                alert('Error al cargar los archivos. Verifica que el servidor esté corriendo.');
+                showError('Error al cargar los archivos');
             }
         }
 
@@ -674,13 +715,13 @@
             listItems.innerHTML = '';
 
             items.forEach(item => {
-                // Grid view
-                const card = document.createElement('div');
-                card.className = 'file-card';
-                card.onclick = () => item.type === 'folder' ? loadFiles(item._id) : openFile(item);
-                
                 const isFolder = item.type === 'folder';
                 const icon = isFolder ? '📁' : '📄';
+                
+                // Vista de cuadrícula
+                const card = document.createElement('div');
+                card.className = 'file-card';
+                card.onclick = () => isFolder ? loadFiles(item._id) : openFile(item);
                 
                 card.innerHTML = `
                     <div class="file-menu" onclick="event.stopPropagation(); showOptions('${item._id}', '${item.type}')">⋮</div>
@@ -690,23 +731,23 @@
                     <div class="file-name">${item.name}</div>
                     <div class="file-meta">
                         <span>${formatDate(item.updatedAt)}</span>
-                        ${!isFolder ? `<span>${formatSize(item.size || 0)}</span>` : ''}
+                        ${!isFolder && item.content ? `<span>${formatSize(item.content.length)}</span>` : ''}
                     </div>
                 `;
                 container.appendChild(card);
 
-                // List view
+                // Vista de lista
                 const listItem = document.createElement('div');
                 listItem.className = 'list-item';
-                listItem.onclick = () => item.type === 'folder' ? loadFiles(item._id) : openFile(item);
+                listItem.onclick = () => isFolder ? loadFiles(item._id) : openFile(item);
                 listItem.innerHTML = `
                     <div class="list-item-name">
                         <span class="list-icon">${icon}</span>
                         <span>${item.name}</span>
                     </div>
-                    <div>${currentUserId}</div>
+                    <div>${currentUser?.nombreUsuario || 'Usuario'}</div>
                     <div>${formatDate(item.updatedAt)}</div>
-                    <div>${!isFolder ? formatSize(item.size || 0) : '-'}</div>
+                    <div>${!isFolder && item.content ? formatSize(item.content.length) : '-'}</div>
                     <div>
                         <button class="btn btn-secondary" style="padding: 4px 12px; font-size: 12px;" onclick="event.stopPropagation(); showOptions('${item._id}', '${item.type}')">⋮</button>
                     </div>
@@ -725,11 +766,19 @@
         async function saveFile() {
             const content = document.getElementById('editContent').value;
             
+            if (!currentUser) {
+                showError('No hay usuario autenticado');
+                return;
+            }
+
             try {
                 const response = await fetch(`${API_URL}/files/${currentFileId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content, userId: currentUserId })
+                    body: JSON.stringify({ 
+                        content, 
+                        userId: currentUser._id 
+                    })
                 });
 
                 if (response.ok) {
@@ -738,11 +787,11 @@
                     loadFiles(currentFolderId);
                 } else {
                     const error = await response.json();
-                    alert('Error: ' + error.error);
+                    showError('Error: ' + error.error);
                 }
             } catch (error) {
-                console.error('Error saving file:', error);
-                alert('Error al guardar el archivo');
+                console.error('Error guardando archivo:', error);
+                showError('Error al guardar el archivo');
             }
         }
 
@@ -750,6 +799,8 @@
             document.getElementById('editModal').classList.remove('active');
             currentFileId = null;
         }
+
+        // ===== CREAR NUEVO =====
 
         function showNewModal() {
             document.getElementById('newModal').classList.add('active');
@@ -765,15 +816,20 @@
             const name = document.getElementById('newName').value.trim();
 
             if (!name) {
-                alert('Por favor ingresa un nombre');
+                showError('Por favor ingresa un nombre');
+                return;
+            }
+
+            if (!currentUser) {
+                showError('No hay usuario autenticado');
                 return;
             }
 
             try {
                 const endpoint = type === 'file' ? 'files' : 'folders';
                 const body = type === 'file' 
-                    ? { name, userId: currentUserId, folderId: currentFolderId }
-                    : { name, userId: currentUserId, parentId: currentFolderId };
+                    ? { name, userId: currentUser._id, folderId: currentFolderId }
+                    : { name, userId: currentUser._id, parentId: currentFolderId };
 
                 const response = await fetch(`${API_URL}/${endpoint}`, {
                     method: 'POST',
@@ -786,13 +842,15 @@
                     loadFiles(currentFolderId);
                 } else {
                     const error = await response.json();
-                    alert('Error: ' + error.error);
+                    showError('Error: ' + error.error);
                 }
             } catch (error) {
-                console.error('Error creating:', error);
-                alert('Error al crear. Verifica que el servidor esté corriendo.');
+                console.error('Error creando:', error);
+                showError('Error al crear');
             }
         }
+
+        // ===== OPCIONES Y ELIMINACIÓN =====
 
         function showOptions(id, type) {
             const action = confirm('¿Deseas eliminar este elemento?');
@@ -802,22 +860,29 @@
         }
 
         async function deleteItem(id, type) {
+            if (!currentUser) {
+                showError('No hay usuario autenticado');
+                return;
+            }
+
             try {
                 const endpoint = type === 'file' ? 'files' : 'folders';
-                const response = await fetch(`${API_URL}/${endpoint}/${id}?userId=${currentUserId}`, {
+                const response = await fetch(`${API_URL}/${endpoint}/${id}?userId=${currentUser._id}`, {
                     method: 'DELETE'
                 });
 
                 if (response.ok) {
                     loadFiles(currentFolderId);
                 } else {
-                    alert('Error al eliminar');
+                    showError('Error al eliminar');
                 }
             } catch (error) {
-                console.error('Error deleting:', error);
-                alert('Error al eliminar');
+                console.error('Error eliminando:', error);
+                showError('Error al eliminar');
             }
         }
+
+        // ===== VISTAS =====
 
         function switchView(view) {
             currentView = view;
@@ -834,8 +899,10 @@
         }
 
         function navigateToRoot() {
-            loadFiles(null);
+            loadFiles(currentUser?.carpetaPersonalId);
         }
+
+        // ===== UI HELPERS =====
 
         function showLoading() {
             document.getElementById('loadingIndicator').style.display = 'block';
@@ -863,6 +930,13 @@
             document.getElementById('emptyState').style.display = 'none';
         }
 
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+            setTimeout(() => errorEl.classList.remove('show'), 5000);
+        }
+
         function formatDate(date) {
             const d = new Date(date);
             return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -876,11 +950,18 @@
             return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
         }
 
+        // ===== FUNCIONALIDADES ADICIONALES =====
+
         async function loadShared() {
+            if (!currentUser) {
+                showError('No hay usuario autenticado');
+                return;
+            }
+
             showLoading();
 
             try {
-                const response = await fetch(`${API_URL}/compartidos/${currentUserId}`);
+                const response = await fetch(`${API_URL}/compartidos/${currentUser._id}`);
                 const items = await response.json();
 
                 hideLoading();
@@ -892,36 +973,58 @@
                     renderFiles(items);
                 }
             } catch (error) {
-                console.error('Error loading shared:', error);
+                console.error('Error cargando compartidos:', error);
                 hideLoading();
-                alert('Error al cargar los compartidos.');
+                showError('Error al cargar los compartidos');
             }
         }
-
 
         async function loadRecent() {
             alert('Funcionalidad de recientes en desarrollo');
         }
 
         async function showAudit() {
+            if (!currentUser) {
+                showError('No hay usuario autenticado');
+                return;
+            }
+
             try {
-                const response = await fetch(`${API_URL}/audit?userId=${currentUserId}`);
+                const response = await fetch(`${API_URL}/audit?userId=${currentUser._id}`);
                 const logs = await response.json();
                 
-                let auditText = 'REGISTRO DE ACTIVIDAD:\n\n';
-                logs.forEach(log => {
-                    auditText += `${log.action.toUpperCase()} - ${log.resourceName}\n`;
-                    auditText += `Fecha: ${formatDate(log.timestamp)}\n\n`;
-                });
+                let auditText = '📋 REGISTRO DE ACTIVIDAD:\n\n';
                 
-                alert(auditText || 'No hay actividad registrada');
+                if (logs.length === 0) {
+                    auditText += 'No hay actividad registrada aún.';
+                } else {
+                    logs.forEach(log => {
+                        auditText += `${getActionEmoji(log.action)} ${log.action.toUpperCase()} - ${log.resourceName}\n`;
+                        auditText += `   Usuario: ${log.userId}\n`;
+                        auditText += `   Fecha: ${formatDate(log.timestamp)}\n\n`;
+                    });
+                }
+                
+                alert(auditText);
             } catch (error) {
-                console.error('Error loading audit:', error);
-                alert('Error al cargar el registro de auditoría');
+                console.error('Error cargando auditoría:', error);
+                showError('Error al cargar el registro de auditoría');
             }
         }
 
-        // Search functionality
+        function getActionEmoji(action) {
+            const emojis = {
+                'create': '➕',
+                'edit': '✏️',
+                'delete': '🗑️',
+                'share': '🔗',
+                'restore': '↩️'
+            };
+            return emojis[action] || '📝';
+        }
+
+        // ===== BÚSQUEDA =====
+
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
             document.querySelectorAll('.file-card, .list-item').forEach(item => {
@@ -932,6 +1035,13 @@
                     item.style.display = 'none';
                 }
             });
+        });
+
+        // ===== INICIALIZACIÓN =====
+        
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Iniciando ArchivosYa...');
+            initUser();
         });
     </script>
 </body>
