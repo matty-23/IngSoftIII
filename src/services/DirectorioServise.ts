@@ -1,13 +1,10 @@
 import { FolderModel, IFolderDocument } from '../Infraestructura/database/Esquemas/DirectorioEsquema';
+import { UsuarioModel } from '../Infraestructura/database/Esquemas/UsuarioEsquema';
 
 export class FolderService {
 
     constructor() {
     }
-
-    /**
-     * Crea una nueva carpeta
-     */
     async createFolder(name: string, parentId: string | null, userId: string): Promise<IFolderDocument> {
         if (!name || !userId) {
             throw new Error('name y userId son requeridos');
@@ -24,21 +21,10 @@ export class FolderService {
             ownerId: userId
         });
 
-        // // Dar permiso de propietario automáticamente
-        // await this.permissionService.shareResource(
-        //     folder.id.toString(),
-        //     'folder',
-        //     userId,
-        //     'owner',
-        //     userId
-        // );
 
         return folder;
     }
 
-    /**
-     * Lista las carpetas dentro de un directorio (o raíz)
-     */
     async listFolders(parentId?: string | null): Promise<IFolderDocument[]> {
         const filter = {
             parentId: parentId === 'root' || !parentId ? null : parentId
@@ -46,14 +32,11 @@ export class FolderService {
         return await FolderModel.find(filter);
     }
 
-    /**
-     * Elimina una carpeta (si tiene permiso)
-     */
     async deleteFolder(folderId: string, userId: string): Promise<void> {
-        /* const canDelete = await this.permissionService.checkPermission(userId, folderId, 'delete');
-        if (!canDelete) {
+        const c = await FolderModel.findById(userId);
+        /* if (!canDelete) {
             throw new Error('No tienes permiso para eliminar esta carpeta');
-        } */
+        }  */
 
         await FolderModel.findByIdAndDelete(folderId);
     }

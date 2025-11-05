@@ -2,6 +2,7 @@ import { Directorio } from './Directorio';
 import { Componente } from '../interfaces/Componente';
 import { ISharedReference } from '../Infraestructura/database/Esquemas/ISharedReference';
 import { FolderModel } from '../Infraestructura/database/Esquemas/DirectorioEsquema';
+import { CompartirService  } from '../services/CompartidosService';
 import { SharedReferenceModel } from '../Infraestructura/database/Esquemas/ISharedReference';
 import { permission } from 'process';
 
@@ -16,10 +17,10 @@ export class Compartidos extends Directorio {
         super(id, 'Compartidos', ownerId, null);
     }
 
-    addReference(targetId: string, permission:number,ownerId:string,sharedWithId:string): void {
+    async addReference(targetId: string, permission:number,ownerId:string,sharedWithId:string): Promise<void> {
         // Evitar duplicados
         if (!this.references.some(ref => ref.targetId == targetId)) {
-            const ref = new SharedReferenceModel({ targetId, ownerId, sharedWithId, permission });
+            const ref = await CompartirService.compartirRecurso(ownerId,targetId,sharedWithId,permission);//new SharedReferenceModel({ targetId, ownerId, sharedWithId, permission });
             this.references.push(ref);
         }
     }
