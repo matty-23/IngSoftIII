@@ -1,4 +1,5 @@
 import express from 'express';
+import http from 'http';
 import cors from 'cors';
 import { connectDB } from './Infraestructura/database/conexion';
 import fileRoutes from './controllers/DocumentoController';
@@ -6,23 +7,36 @@ import auditRoutes from './controllers/AuditoriaController';
 import folderRoutes from './controllers/DirectorioController';
 import userRoutes from './controllers/UsuarioController';
 import compartRoutes from './controllers/CompartidoController';
-import authRoutes from './controllers/AuthController'; // ✨ NUEVO
+import authRoutes from './controllers/AuthController'; 
+import { initSocket } from './socket'; 
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const server = http.createServer(app); // ✅ Envolver Express en HTTP
+const PORT = 3000;
 
-// Middlewares
-app.use(cors());
+// 🧱 Middleware
+app.use(cors({
+  origin: [
+    "http://10.8.72.168:51019", // tu frontend exacto
+    /^http:\/\/localhost:\d+$/
+    // /^http:\/\/localhost:\d+$/,        // localhost
+    ///^http:\/\/10\.8\.0\.\d+:\d+$/  // red local (192.168.0.x)
+  ], 
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}))
 app.use(express.json());
 
-// Logging middleware
+// 🧠 Logging opcional
 app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path}`);
-    next();
+  console.log(`${req.method} ${req.path}`);
+  next();
 });
 
+initSocket(server);
+
 // Routes
-app.use('/api/auth', authRoutes);        // ✨ NUEVO - Autenticación
+app.use('/api/auth', authRoutes);        
 app.use('/api/files', fileRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/folders', folderRoutes);
@@ -45,12 +59,14 @@ async function start() {
     try {
         await connectDB();
         
-        app.listen(PORT, () => {
+        // ✅ Escuchar con el servidor HTTP (no con app.listen)
+        server.listen(PORT, "0.0.0.0",() => {
             console.log('');
             console.log('='.repeat(60));
             console.log('🚀 ArchivosYa - Sistema de Gestión de Archivos');
             console.log('='.repeat(60));
             console.log(`📡 Servidor corriendo en http://localhost:${PORT}`);
+            console.log(`🔗 WebSocket activo en ws://localhost:${PORT}`);
             console.log(`🔍 Health check: http://localhost:${PORT}/health`);
             console.log('');
             console.log('🔐 Autenticación:');

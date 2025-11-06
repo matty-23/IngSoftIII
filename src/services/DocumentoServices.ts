@@ -130,4 +130,40 @@ export class FileService {
             state
         );
     }
+    // 🔄 Guardar contenido colaborativo (desde Yjs)
+async saveCollaborativeContent(id: string, content: string, userId: string): Promise<Documento> {
+  const fileDoc = await FileModel.findById(id);
+  if (!fileDoc) throw new Error('Archivo no encontrado');
+
+  // Verificar permisos básicos
+  const esPropietario = fileDoc.ownerId.toString() === userId;
+  if (!esPropietario) {
+    const { SharedReferenceModel } = await import('../Infraestructura/database/Esquemas/ISharedReference');
+    const ref = await SharedReferenceModel.findOne({
+      targetId: id,
+      sharedWithId: userId
+    });
+    if (!ref || ref.permission < 6) {
+      throw new Error('No tienes permiso para editar este archivo');
+    }
+  }
+
+  // Actualizar contenido directamente (sin lock ni optimistic)
+  fileDoc.content = content;
+  fileDoc.state = 'idle';
+  fileDoc.version += 1;
+  await fileDoc.save();
+
+  // Emitir evento de guardado colaborativo (opcional)
+  this.eventBus.emit('FileSaved', {
+    fileId: id.toString(),
+    fileName: fileDoc.name,
+    userId,
+    content,
+    timestamp: new Date()
+  });
+
+  return this.mapToEntity(fileDoc);
+}
+
 }

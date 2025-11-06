@@ -2,7 +2,7 @@
 import { Router, Request, Response } from 'express';
 import { FileService } from '../services/DocumentoServices';
 import { VersionService } from '../services/VersionService';
-
+import { getIO } from '../socket';
 const router = Router();
 const fileService = new FileService();
 const versionService = new VersionService();
@@ -18,15 +18,6 @@ router.post('/', async (req: Request, res: Response) => {
 
         const file = await fileService.createFile(name, folderId || null, userId);
         
-        // // Dar permiso de owner automáticamente
-        // await permissionService.shareResource(
-        //     file.id,
-        //     'file',
-        //     userId,
-        //     'owner',
-        //     userId
-        // );
-
         res.status(201).json(file);
     } catch (error: any) {
         res.status(500).json({ error: error.message });
@@ -106,17 +97,6 @@ router.delete('/:id', async (req: Request, res: Response) => {
             return res.status(400).json({ error: 'userId es requerido' });
         }
 
-       /*  // Verificar permiso de eliminación (STRATEGY PATTERN)
-        const canDelete = await permissionService.checkPermission(
-            userId as string,
-            id,
-            'delete'
-        );
-
-        if (!canDelete) {
-            return res.status(403).json({ error: 'No tienes permiso para eliminar este archivo' });
-        } */
-
         await fileService.deleteFile(id, userId as string);
         res.status(204).send();
     } catch (error: any) {
@@ -163,6 +143,28 @@ router.get('/folder/:folderId', async (req: Request, res: Response) => {
     } catch (error: any) {
         res.status(500).json({ error: error.message });
     }
+});
+
+// Guardar contenido colaborativo desde Yjs
+router.put('/:id/persist', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { content, userId } = req.body;
+
+    if (!content || !userId) {
+      return res.status(400).json({ error: 'content y userId son requeridos' });
+    }
+
+    // Guardar el contenido (sin versionado optimista ni bloqueo)
+    const updated = await fileService.saveCollaborativeContent(id, content, userId);
+
+    res.json({
+      message: 'Contenido colaborativo guardado correctamente',
+      file: updated
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 export default router;
