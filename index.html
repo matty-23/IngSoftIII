@@ -1,1389 +1,885 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArchivosYa - Inicio de Sesión</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #202124;
-            min-height: 100vh;
-        }
-
-        /* ===== PANTALLA DE LOGIN ===== */
-        .login-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .login-box {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            padding: 48px;
-            width: 100%;
-            max-width: 450px;
-        }
-
-        .login-header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .login-logo {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 36px;
-            font-weight: bold;
-            margin: 0 auto 20px;
-        }
-
-        .login-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #202124;
-            margin-bottom: 8px;
-        }
-
-        .login-subtitle {
-            font-size: 14px;
-            color: #5f6368;
-        }
-
-        .login-tabs {
-            display: flex;
-            border-bottom: 2px solid #e0e0e0;
-            margin-bottom: 32px;
-        }
-
-        .login-tab {
-            flex: 1;
-            padding: 12px 0;
-            text-align: center;
-            cursor: pointer;
-            font-weight: 600;
-            color: #5f6368;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
-        }
-
-        .login-tab.active {
-            color: #667eea;
-            border-bottom-color: #667eea;
-        }
-
-        .login-form {
-            display: none;
-        }
-
-        .login-form.active {
-            display: block;
-        }
-
-        .form-group {
-            margin-bottom: 24px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #202124;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .btn-login {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-login:active {
-            transform: translateY(0);
-        }
-
-        .error-message {
-            background: #fee;
-            color: #c00;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            display: none;
-            font-size: 14px;
-        }
-
-        .error-message.show {
-            display: block;
-        }
-
-        .success-message {
-            background: #e8f5e9;
-            color: #2e7d32;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            display: none;
-            font-size: 14px;
-        }
-
-        .success-message.show {
-            display: block;
-        }
-
-        /* ===== PANTALLA PRINCIPAL (igual que antes) ===== */
-        .app-container {
-            display: none;
-        }
-
-        .app-container.active {
-            display: block;
-        }
-
-        .header {
-            background: white;
-            border-bottom: 1px solid #e0e0e0;
-            padding: 12px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 22px;
-            font-weight: 500;
-            color: #5f6368;
-        }
-
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-        }
-
-        .search-bar {
-            width: 600px;
-            background: #f1f3f4;
-            border-radius: 8px;
-            padding: 10px 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .search-bar input {
-            flex: 1;
-            border: none;
-            background: transparent;
-            outline: none;
-            font-size: 14px;
-        }
-
-        .user-section {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            position: relative;
-        }
-
-        .user-info {
-            text-align: right;
-        }
-
-        .user-name {
-            font-size: 14px;
-            font-weight: 500;
-            color: #202124;
-        }
-
-        .user-email {
-            font-size: 12px;
-            color: #5f6368;
-        }
-
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        .user-menu {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            margin-top: 8px;
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            display: none;
-            min-width: 200px;
-            z-index: 1000;
-        }
-
-        .user-menu.active {
-            display: block;
-        }
-
-        .user-menu-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .user-menu-item:hover {
-            background: #f7f9fc;
-        }
-
-        .user-menu-item:first-child {
-            border-radius: 8px 8px 0 0;
-        }
-
-        .user-menu-item:last-child {
-            border-radius: 0 0 8px 8px;
-        }
-
-        .user-menu-divider {
-            height: 1px;
-            background: #e0e0e0;
-            margin: 4px 0;
-        }
-
-        .main-container {
-            display: flex;
-            height: calc(100vh - 65px);
-        }
-
-        .sidebar {
-            width: 250px;
-            background: white;
-            border-right: 1px solid #e0e0e0;
-            padding: 20px 12px;
-        }
-
-        .new-button {
-            background: white;
-            border: 1px solid #dadce0;
-            border-radius: 24px;
-            padding: 12px 24px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
-        .new-button:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-
-        .sidebar-nav {
-            list-style: none;
-        }
-
-        .sidebar-item {
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 14px;
-            transition: background 0.2s;
-            margin-bottom: 4px;
-        }
-
-        .sidebar-item:hover {
-            background: #f1f3f4;
-        }
-
-        .sidebar-item.active {
-            background: #e8f0fe;
-            color: #1967d2;
-        }
-
-        .content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-        }
-
-        .files-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        .file-card {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-        }
-
-        .file-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border-color: #1967d2;
-        }
-
-        .file-icon {
-            width: 100%;
-            height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            margin-bottom: 12px;
-            border-radius: 4px;
-        }
-
-        .file-icon.folder {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .file-icon.file {
-            background: #f1f3f4;
-            color: #5f6368;
-        }
-
-        .file-name {
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 4px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 8px;
-            padding: 24px;
-            width: 500px;
-            max-width: 90%;
-        }
-
-        .modal-header {
-            font-size: 20px;
-            font-weight: 500;
-            margin-bottom: 20px;
-        }
-
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            margin-top: 24px;
-        }
-
-        .btn {
-            padding: 10px 24px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: #1967d2;
-            color: white;
-        }
-
-        .btn-secondary {
-            background: white;
-            color: #5f6368;
-            border: 1px solid #dadce0;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f1f3f4;
-            border-top: 4px solid #1967d2;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-        }
-
-        .empty-icon {
-            font-size: 64px;
-            color: #dadce0;
-            margin-bottom: 16px;
-        }
-    </style>
-    <style>
-    /* 🔹 Clases base usadas por el modal */
-    .hidden { display: none; }
-    .flex { display: flex; justify-content: center; align-items: center; }
-    .fixed { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
-    .inset-0 { inset: 0; }
-    .bg-black { background-color: rgba(0, 0, 0, 1); }
-    .bg-opacity-50 { background-color: rgba(0, 0, 0, 0.5); }
-
-    /* 🔹 Opcional: estilos extra para el modal */
-    #shareModal {
-      z-index: 9999;
-      backdrop-filter: blur(2px);
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ArchivosYa — Combinado (WebSocket + Compartir)</title>
+  <style>
+    /* ---------- RESET / BASE ---------- */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html,body { height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#202124; }
+
+    /* ---------- LOGIN ---------- */
+    .login-container { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+    .login-box { background:#fff; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,.25); padding:40px; width:100%; max-width:480px; }
+    .login-logo { width:80px;height:80px;border-radius:20px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;margin:0 auto 16px; }
+    .login-title { text-align:center; font-size:26px; font-weight:700; margin-bottom:6px; color:#202124; }
+    .login-subtitle { text-align:center; color:#5f6368; margin-bottom:20px; font-size:14px; }
+
+    .login-tabs { display:flex; border-bottom:2px solid #e0e0e0; margin-bottom:20px; }
+    .login-tab { flex:1; padding:12px 0; text-align:center; cursor:pointer; font-weight:600; color:#5f6368; border-bottom:3px solid transparent; }
+    .login-tab.active { color:#667eea; border-bottom-color:#667eea; }
+
+    .form-group { margin-bottom:16px; }
+    label { display:block; margin-bottom:8px; font-weight:600; color:#202124; font-size:14px; }
+    input[type="text"], input[type="email"], textarea, select {
+      width:100%; padding:12px 14px; border:2px solid #e0e0e0; border-radius:8px; font-size:14px;
     }
+    input:focus, textarea:focus, select:focus { outline:none; border-color:#667eea; }
 
-    /* 🔹 Estilo para las tarjetas de archivo */
-    .file-card {
-      cursor: pointer;
-      transition: transform 0.2s;
+    .btn-login { width:100%; padding:14px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; border:none; border-radius:8px; font-weight:700; cursor:pointer; transition:transform .15s, box-shadow .15s; }
+    .btn-login:hover { transform:translateY(-2px); box-shadow:0 8px 16px rgba(102,126,234,0.35); }
+
+    .error-message, .success-message {
+      padding:12px;border-radius:8px;margin-bottom:12px;font-size:14px; display:none;
     }
-    .file-card:hover {
-      transform: scale(1.02);
-    }
+    .error-message.show{ display:block; background:#ffecec; color:#b00000; }
+    .success-message.show{ display:block; background:#e8f5e9; color:#2e7d32; }
+
+    /* ---------- APP LAYOUT ---------- */
+    .app-container { display:none; min-height:100vh; }
+    .app-container.active { display:block; }
+
+    .header { background:#fff; border-bottom:1px solid #e0e0e0; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; }
+    .header-left { display:flex; align-items:center; gap:14px; }
+    .logo { display:flex; align-items:center; gap:8px; font-weight:600; color:#5f6368; }
+    .logo-icon { width:36px;height:36px;border-radius:8px; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; }
+    .search-bar { width:520px; background:#f1f3f4; border-radius:8px; padding:8px 12px; display:flex; align-items:center; gap:8px; }
+    .search-bar input { flex:1; border:none; background:transparent; outline:none; font-size:14px; }
+
+    .user-section { display:flex; align-items:center; gap:12px; position:relative; }
+    .user-name { font-weight:600; color:#202124; font-size:14px; }
+    .user-email { font-size:12px; color:#5f6368; }
+    .user-avatar { width:36px;height:36px;border-radius:50%; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:700; }
+
+    .user-menu { position:absolute; top:100%; right:0; margin-top:8px; background:#fff; border:1px solid #e0e0e0; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.12); display:none; min-width:200px; z-index:1000; }
+    .user-menu.active { display:block; }
+    .user-menu-item { padding:10px 12px; display:flex; gap:10px; align-items:center; cursor:pointer; }
+    .user-menu-divider { height:1px; background:#e0e0e0; margin:4px 0; }
+
+    .main-container { display:flex; height:calc(100vh - 64px); }
+    .sidebar { width:250px; background:#fff; border-right:1px solid #e0e0e0; padding:20px; }
+    .new-button { display:flex; align-items:center; gap:10px; padding:10px 16px; border-radius:24px; border:1px solid #dadce0; background:#fff; cursor:pointer; margin-bottom:18px; font-weight:600; }
+    .sidebar-nav { list-style:none; }
+    .sidebar-item { padding:10px 12px; border-radius:8px; display:flex; gap:8px; align-items:center; cursor:pointer; margin-bottom:6px; }
+    .sidebar-item.active { background:#e8f0fe; color:#1967d2; }
+
+    .content { flex:1; overflow:auto; padding:22px; background: linear-gradient(#f8fbff00,#ffffff00); }
+    .files-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px,1fr)); gap:18px; }
+
+    .file-card { background:#fff; border:1px solid #e0e0e0; border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center; gap:10px; cursor:pointer; transition:transform .12s, box-shadow .12s; position:relative; }
+    .file-card:hover { transform:translateY(-4px); box-shadow:0 6px 18px rgba(0,0,0,.06); border-color:#1967d2; }
+    .file-card.locked { opacity:.55; cursor:not-allowed; }
+    .file-card.locked::after { content:"🔒"; position:absolute; top:8px; right:8px; font-size:18px; color:#ff9800; }
+    .file-icon { font-size:36px; margin-right:12px; display:flex; align-items:center; justify-content:center; width:60px; height:60px; border-radius:6px; }
+    .file-icon.folder { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; }
+    .file-icon.file { background:#f1f3f4; color:#5f6368; }
+
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:2000; align-items:center; justify-content:center; padding:20px; }
+    .modal.active { display:flex; }
+    .modal-content { width:100%; max-width:720px; background:#fff; border-radius:12px; padding:20px; box-shadow:0 14px 40px rgba(0,0,0,.25); }
+
+    .modal-header { font-size:18px; font-weight:700; margin-bottom:12px; }
+    .modal-actions { display:flex; justify-content:flex-end; gap:12px; margin-top:12px; }
+
+    .btn { padding:8px 14px; border-radius:8px; border:none; cursor:pointer; font-weight:600; }
+    .btn-primary { background:#1967d2; color:#fff; }
+    .btn-secondary { background:#fff; color:#5f6368; border:1px solid #dadce0; }
+
+    .loading { text-align:center; padding:40px; }
+    .spinner { width:40px;height:40px;border:4px solid #f1f3f4;border-top:4px solid #1967d2;border-radius:50%; animation:spin 1s linear infinite;margin:0 auto 12px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    .empty-state { text-align:center; padding:60px 20px; color:#5f6368; }
+
+    /* small helpers */
+    .hidden { display:none; }
+    .flex { display:flex; align-items:center; justify-content:center; }
   </style>
+  <!-- Socket.IO client (asegurate que la versión exista en tu app) -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/yjs@13.6.17/dist/y.min.js"></script>
 </head>
 <body>
-    <!-- ===== PANTALLA DE LOGIN ===== -->
-    <div class="login-container" id="loginContainer">
-        <div class="login-box">
-            <div class="login-header">
-                <div class="login-logo">AY</div>
-                <h1 class="login-title">ArchivosYa</h1>
-                <p class="login-subtitle">Tu sistema de gestión de archivos</p>
-            </div>
 
-            <div class="login-tabs">
-                <div class="login-tab active" onclick="switchTab('login')">Iniciar Sesión</div>
-                <div class="login-tab" onclick="switchTab('register')">Registrarse</div>
-            </div>
+  <!-- ===== LOGIN ===== -->
+  <div class="login-container" id="loginContainer">
+    <div class="login-box">
+      <div class="login-logo">AY</div>
+      <div class="login-title">ArchivosYa</div>
+      <div class="login-subtitle">Tu sistema de gestión de archivos</div>
 
-            <div id="loginError" class="error-message"></div>
-            <div id="loginSuccess" class="success-message"></div>
+      <div class="login-tabs">
+        <div class="login-tab active" id="tabLogin" onclick="switchTab('login')">Iniciar Sesión</div>
+        <div class="login-tab" id="tabRegister" onclick="switchTab('register')">Registrarse</div>
+      </div>
 
-            <!-- Formulario de Login -->
-            <form class="login-form active" id="loginForm" onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label for="loginEmail">Email</label>
-                    <input type="email" id="loginEmail" required placeholder="tu@email.com">
-                </div>
-                <button type="submit" class="btn-login">Iniciar Sesión</button>
-            </form>
+      <div id="loginError" class="error-message"></div>
+      <div id="loginSuccess" class="success-message"></div>
 
-            <!-- Formulario de Registro -->
-            <form class="login-form" id="registerForm" onsubmit="handleRegister(event)">
-                <div class="form-group">
-                    <label for="registerName">Nombre de Usuario</label>
-                    <input type="text" id="registerName" required placeholder="Tu nombre">
-                </div>
-                <div class="form-group">
-                    <label for="registerEmail">Email</label>
-                    <input type="email" id="registerEmail" required placeholder="tu@email.com">
-                </div>
-                <button type="submit" class="btn-login">Crear Cuenta</button>
-            </form>
+      <form id="loginForm" class="login-form active" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input id="loginEmail" type="email" required placeholder="tu@email.com" />
         </div>
-    </div>
+        <button class="btn-login" type="submit">Iniciar Sesión</button>
+      </form>
 
-    <!-- ===== APLICACIÓN PRINCIPAL ===== -->
-    <div class="app-container" id="appContainer">
-        <header class="header">
-            <div class="header-left">
-                <div class="logo">
-                    <div class="logo-icon">AY</div>
-                    <span>ArchivosYa</span>
-                </div>
-                <div class="search-bar">
-                    <span>🔍</span>
-                    <input type="text" placeholder="Buscar archivos..." id="searchInput">
-                </div>
-            </div>
-            <div class="user-section">
-                <div class="user-info">
-                    <div class="user-name" id="userName">Usuario</div>
-                    <div class="user-email" id="userEmail">usuario@email.com</div>
-                </div>
-                <div class="user-avatar" id="userAvatar" onclick="toggleUserMenu()">U</div>
-                
-                <div class="user-menu" id="userMenu">
-                    <div class="user-menu-item" onclick="showProfile()">
-                        <span>👤</span>
-                        <span>Mi Perfil</span>
-                    </div>
-                    <div class="user-menu-divider"></div>
-                    <div class="user-menu-item" onclick="handleLogout()">
-                        <span>🚪</span>
-                        <span>Cerrar Sesión</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <div class="main-container">
-            <aside class="sidebar">
-                <button class="new-button" onclick="showNewModal()">
-                    <span>➕</span>
-                    <span>Nuevo</span>
-                </button>
-                <ul class="sidebar-nav">
-                    <li class="sidebar-item active" onclick="loadFiles()">
-                        <span>📁</span>
-                        <span>Mi unidad</span>
-                    </li>
-                    <li class="sidebar-item" onclick="loadShared()">
-                        <span>👥</span>
-                        <span>Compartido</span>
-                    </li>
-                </ul>
-            </aside>
-
-            <main class="content">
-                <div id="loadingIndicator" class="loading" style="display: none;">
-                    <div class="spinner"></div>
-                    <div>Cargando...</div>
-                </div>
-
-                <div id="filesContainer" class="files-grid"></div>
-
-                <div id="emptyState" class="empty-state" style="display: none;">
-                    <div class="empty-icon">📂</div>
-                    <div>No hay archivos aún. ¡Crea uno nuevo!</div>
-                </div>
-            </main>
+      <form id="registerForm" class="login-form" onsubmit="handleRegister(event)">
+        <div class="form-group">
+          <label for="registerName">Nombre de Usuario</label>
+          <input id="registerName" type="text" required placeholder="Tu nombre" />
         </div>
-    </div>
-
-    <!-- Modal: Nuevo archivo/carpeta -->
-    <div class="modal" id="newModal">
-        <div class="modal-content">
-            <div class="modal-header">Crear nuevo</div>
-            <div class="form-group">
-                <label>Tipo</label>
-                <select id="newType">
-                    <option value="file">Archivo</option>
-                    <option value="folder">Carpeta</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Nombre</label>
-                <input type="text" id="newName" placeholder="Ingresa un nombre">
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeModal('newModal')">Cancelar</button>
-                <button class="btn btn-primary" onclick="createNew()">Crear</button>
-            </div>
+        <div class="form-group">
+          <label for="registerEmail">Email</label>
+          <input id="registerEmail" type="email" required placeholder="tu@email.com" />
         </div>
-    </div>
-
-    <!-- Modal: Editar archivo -->
-    <div class="modal" id="editModal">
-        <div class="modal-content">
-            <div class="modal-header">Editar archivo</div>
-            <div class="form-group">
-                <label>Nombre</label>
-                <input type="text" id="editName" readonly>
-            </div>
-            <div class="form-group">
-                <label>Contenido</label>
-                <textarea id="editContent" rows="15" style="width: 100%; padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-family: monospace;"></textarea>
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancelar</button>
-                <button class="btn btn-primary" onclick="saveFile()">Guardar</button>
-            </div>
-        </div>
-    </div>
-    <!-- 🌐 MODAL DE COMPARTIR ARCHIVO -->
-<div id="shareModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center">
-  <div class="bg-white p-6 rounded-2xl shadow-xl w-96">
-    <h2 class="text-xl font-semibold mb-4 text-center">Compartir archivo</h2>
-
-    <label class="block mb-2 text-sm font-medium">📧 Email del destinatario</label>
-    <input type="email" id="shareEmail" placeholder="ejemplo@correo.com"
-      class="w-full border rounded-lg p-2 mb-4 outline-none focus:ring-2 focus:ring-blue-400">
-
-    <label class="block mb-2 text-sm font-medium">🔐 Permiso</label>
-    <select id="sharePermission" class="w-full border rounded-lg p-2 mb-4">
-      <option value="4">Lectura (r)</option>
-      <option value="6">Lectura y escritura (rw)</option>
-      <option value="7">Total (rwx)</option>
-    </select>
-
-    <div class="flex justify-between mt-4">
-      <button id="cancelShareBtn" class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">
-        Cancelar
-      </button>
-      <button id="confirmShareBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-        Compartir
-      </button>
+        <button class="btn-login" type="submit">Crear Cuenta</button>
+      </form>
     </div>
   </div>
-</div>
-    <script>
-        const API_URL = 'http://localhost:3000/api';
-        let currentUser = null;
-        let currentUserId = null;
-        let currentFolderId = null;
-        let currentFileId = null;
 
-        /* function onLogin(userData) {
-        // Guardar usuario en variables globales
-            currentUser = userData;
-            currentUserId = userData._id;
-            loadFiles();
-            } */
-        // ===== AUTENTICACIÓN =====
+  <!-- ===== APP ===== -->
+  <div class="app-container" id="appContainer" aria-hidden="true">
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">
+          <div class="logo-icon">AY</div>
+          <div>ArchivosYa</div>
+        </div>
+        <div class="search-bar">
+          <div>🔍</div>
+          <input id="searchInput" placeholder="Buscar archivos..." />
+        </div>
+      </div>
 
-        // Verificar si hay sesión guardada
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedUser = localStorage.getItem('archivosya_user');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                currentUserId = currentUser._id; // 👈 se agrega esta línea
-                console.log('👤 Usuario actual:', currentUser.email, 'ID:', currentUserId);
-                showApp();
-            }
-        });
+      <div class="user-section" id="userSection">
+        <div>
+          <div class="user-name" id="userName">Usuario</div>
+          <div class="user-email" id="userEmail">usuario@email.com</div>
+        </div>
+        <div class="user-avatar" id="userAvatar" onclick="toggleUserMenu()">U</div>
+        <div class="user-menu" id="userMenu">
+          <div class="user-menu-item" onclick="showProfile()">👤 Mi Perfil</div>
+          <div class="user-menu-divider"></div>
+          <div class="user-menu-item" onclick="handleLogout()">🚪 Cerrar Sesión</div>
+        </div>
+      </div>
+    </header>
 
-        // Cambiar entre tabs de login/registro
-        function switchTab(tab) {
-            document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
-            
-            if (tab === 'login') {
-                document.querySelectorAll('.login-tab')[0].classList.add('active');
-                document.getElementById('loginForm').classList.add('active');
-            } else {
-                document.querySelectorAll('.login-tab')[1].classList.add('active');
-                document.getElementById('registerForm').classList.add('active');
-            }
-            
-            hideMessages();
-        }
+    <div class="main-container">
+      <aside class="sidebar">
+        <button class="new-button" onclick="showNewModal()">➕ Nuevo</button>
+        <ul class="sidebar-nav">
+          <li class="sidebar-item active" onclick="loadFiles()">📁 Mi unidad</li>
+          <li class="sidebar-item" onclick="loadShared()">👥 Compartido</li>
+        </ul>
+      </aside>
 
-        // Manejar login
-        async function handleLogin(event) {
-            event.preventDefault();
-            const email = document.getElementById('loginEmail').value;
+      <main class="content">
+        <div id="loadingIndicator" class="loading hidden">
+          <div class="spinner"></div>
+          <div>Cargando...</div>
+        </div>
 
-            try {
-                const response = await fetch(`${API_URL}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
+        <div id="filesContainer" class="files-grid"></div>
 
-                const data = await response.json();
+        <div id="emptyState" class="empty-state hidden">
+          <div style="font-size:64px; margin-bottom:12px;">📂</div>
+          <div>No hay archivos aún. ¡Crea uno nuevo!</div>
+        </div>
+      </main>
+    </div>
+  </div>
 
-                if (response.ok) {
-                    currentUser = data.user;
-                    currentUserId = currentUser._id; // 👈 se agrega esta línea
-                    localStorage.setItem('archivosya_user', JSON.stringify(currentUser));
-                    showSuccess('¡Inicio de sesión exitoso!');
-                    setTimeout(() => showApp(), 1000);
-                }
-                else {
-                    showError(data.error);
-                }
-            } catch (error) {
-                console.error('Error en login:', error);
-                showError('Error al conectar con el servidor');
-            }
-        }
+  <!-- Modal: Nuevo -->
+  <div id="newModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">Crear nuevo</div>
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="newType"><option value="file">Archivo</option><option value="folder">Carpeta</option></select>
+      </div>
+      <div class="form-group">
+        <label>Nombre</label>
+        <input id="newName" type="text" placeholder="Ingresa un nombre" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('newModal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="createNew()">Crear</button>
+      </div>
+    </div>
+  </div>
 
-        // Manejar registro
-        async function handleRegister(event) {
-            event.preventDefault();
-            const nombreUsuario = document.getElementById('registerName').value;
-            const email = document.getElementById('registerEmail').value;
+  <!-- Modal: Editar -->
+  <div id="editModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <div class="modal-header">Editar archivo</div>
+      <div class="form-group">
+        <label>Nombre</label>
+        <input id="editName" type="text" readonly />
+      </div>
+      <div class="form-group">
+        <label>Contenido</label>
+        <textarea id="editContent" rows="12" style="width:100%; padding:10px; border:1px solid #dadce0; border-radius:6px; font-family:monospace;"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancelar</button>
+        <button id="saveFileBtn" class="btn btn-primary" onclick="saveFile()">Guardar</button>
+      </div>
+    </div>
+  </div>
 
-            try {
-                const response = await fetch(`${API_URL}/auth/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nombreUsuario, email })
-                });
+  <!-- Modal: Compartir -->
+  <div id="shareModal" class="modal" aria-hidden="true">
+    <div class="modal-content" style="max-width:420px;">
+      <div class="modal-header">Compartir archivo</div>
 
-                const data = await response.json();
+      <label class="form-group">📧 Email del destinatario</label>
+      <input id="shareEmail" type="email" placeholder="ejemplo@correo.com" />
 
-                if (response.ok) {
-                    currentUser = data.user;
-                    currentUserId = currentUser._id; // 👈 se agrega esta línea
-                    localStorage.setItem('archivosya_user', JSON.stringify(currentUser));
-                    showSuccess('¡Cuenta creada exitosamente!');
-                    setTimeout(() => showApp(), 1000);
-                }
-                else {
-                    showError(data.error);
-                }
-            } catch (error) {
-                console.error('Error en registro:', error);
-                showError('Error al conectar con el servidor');
-            }
-        }
+      <label class="form-group" style="margin-top:8px;">🔐 Permiso</label>
+      <select id="sharePermission">
+        <option value="4">Lectura (r)</option>
+        <option value="6">Lectura y escritura (rw)</option>
+        <option value="7">Total (rwx)</option>
+      </select>
 
-        // Manejar logout
-        function handleLogout() {
-            if (confirm('¿Estás seguro de cerrar sesión?')) {
-                localStorage.removeItem('archivosya_user');
-                currentUser = null;
-                showLogin();
-            }
-        }
+      <div class="modal-actions" style="margin-top:12px;">
+        <button class="btn btn-secondary" id="cancelShareBtn">Cancelar</button>
+        <button class="btn btn-primary" id="confirmShareBtn">Compartir</button>
+      </div>
+    </div>
+  </div>
 
-        // Mostrar app
-        function showApp() {
-            document.getElementById('loginContainer').style.display = 'none';
-            document.getElementById('appContainer').classList.add('active');
-            updateUserUI();
-            loadFiles();
-        }
+<script>
+/* ================== CONFIG ================== */
+//const API_URL = 'http://192.168.0.101:3000/api';
+const API_URL = 'http://10.8.72.168:3000/api';
+const socket = io('http://10.8.72.168:3000');
+/* ================== ESTADO GLOBAL ================== */
+let currentUser = null;
+let currentUserId = null;
+let currentFolderId = null;
+let currentFileId = null; // archivo abierto actualmente
+let selectedShareTargetId = null; // id seleccionado para compartir
 
-        // Mostrar login
-        function showLogin() {
-            document.getElementById('loginContainer').style.display = 'flex';
-            document.getElementById('appContainer').classList.remove('active');
-            document.getElementById('loginForm').reset();
-            document.getElementById('registerForm').reset();
-            hideMessages();
-            toggleUserMenu(false);
-        }
+/* ================== SOCKET (TIEMPO REAL) ================== */
+/* Escucha bloqueos provenientes del servidor */
+socket.on('fileLocked', ({ fileId, userId }) => {
+  const card = document.querySelector(`.file-card[data-id="${fileId}"]`);
+  if (card) {
+    card.classList.add('locked');
+    card.title = `Bloqueado por ${userId}`;
+  }
+});
+socket.on('fileUnlocked', ({ fileId }) => {
+  const card = document.querySelector(`.file-card[data-id="${fileId}"]`);
+  if (card) {
+    card.classList.remove('locked');
+    card.title = '';
+  }
+});
 
-        // Actualizar UI del usuario
-        function updateUserUI() {
-            if (!currentUser) return;
-            document.getElementById('userName').textContent = currentUser.nombreUsuario;
-            document.getElementById('userEmail').textContent = currentUser.email;
-            document.getElementById('userAvatar').textContent = currentUser.nombreUsuario[0].toUpperCase();
-        }
+/* ================== INICIALIZACIÓN / SESIÓN ================== */
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('archivosya_user');
+  if (saved) {
+    try {
+      currentUser = JSON.parse(saved);
+      currentUserId = currentUser._id || currentUser.id;
+      console.log('👤 Sesión recuperada:', currentUser.email);
+      showApp();
+    } catch (e) {
+      console.warn('No se pudo parsear usuario guardado:', e);
+      localStorage.removeItem('archivosya_user');
+    }
+  }
+});
 
-        // Toggle user menu
-        function toggleUserMenu(force) {
-            const menu = document.getElementById('userMenu');
-            if (force !== undefined) {
-                menu.classList.toggle('active', force);
-            } else {
-                menu.classList.toggle('active');
-            }
-        }
-
-        // Cerrar menú al hacer click fuera
-        document.addEventListener('click', (e) => {
-            const userSection = document.querySelector('.user-section');
-            if (userSection && !userSection.contains(e.target)) {
-                toggleUserMenu(false);
-            }
-        });
-
-        // Mostrar mensajes
-        function showError(message) {
-            hideMessages();
-            const errorEl = document.getElementById('loginError');
-            errorEl.textContent = message;
-            errorEl.classList.add('show');
-        }
-
-        function showSuccess(message) {
-            hideMessages();
-            const successEl = document.getElementById('loginSuccess');
-            successEl.textContent = message;
-            successEl.classList.add('show');
-        }
-
-        function hideMessages() {
-            document.getElementById('loginError').classList.remove('show');
-            document.getElementById('loginSuccess').classList.remove('show');
-        }
-
-        // ===== GESTIÓN DE ARCHIVOS =====
-
-        async function loadFiles(folderId = null) {
-            if (!currentUser) return;
-            
-            showLoading();
-            currentFolderId = folderId || currentUser.carpetaPersonalId;
-
-            try {
-                const [files, folders] = await Promise.all([
-                    fetch(`${API_URL}/files/folder/${currentFolderId || 'root'}`).then(r => r.json()),
-                    fetch(`${API_URL}/folders?parentId=${currentFolderId || 'root'}`).then(r => r.json())
-                ]);
-
-                hideLoading();
-
-                const allItems = [
-                    ...folders.map(f => ({ ...f, type: 'folder' })),
-                    ...files.map(f => ({ ...f, type: 'file' }))
-                ];
-
-                if (allItems.length === 0) {
-                    showEmptyState();
-                } else {
-                    hideEmptyState();
-                    renderFiles(allItems);
-                }
-            } catch (error) {
-                console.error('Error cargando archivos:', error);
-                hideLoading();
-                alert('Error al cargar archivos');
-            }
-        }
-        let selectedFileId = null; // archivo/carpeta seleccionada para compartir
-        function openShareModal(targetId) {
-            selectedFileId = targetId;
-            console.log("📁 Archivo seleccionado para compartir:", selectedFileId);
-            console.log("📤 Compartiendo archivo ID:", selectedFileId);
-            const modal = document.getElementById("shareModal");
-            modal.classList.remove("hidden");
-            modal.classList.add("flex");
-            //document.getElementById("shareModal").classList.remove("hidden");
-            //document.getElementById("shareModal").classList.add("flex");
-            }
-        function closeShareModal() {
-            document.getElementById("shareModal").classList.add("hidden");
-            document.getElementById("shareModal").classList.remove("flex");
-            selectedFileId = null;
-            }
-        document.getElementById("cancelShareBtn").addEventListener("click", closeShareModal);
-        document.getElementById("confirmShareBtn").addEventListener("click", async () => {
-        const email = document.getElementById("shareEmail").value.trim();
-        const permiso = parseInt(document.getElementById("sharePermission").value);
-
-        if (!email) {
-            alert("Por favor, ingresa un correo válido.");
-            return;
-        }
-
-        if (!selectedFileId) {
-            alert("Error: No se seleccionó ningún archivo para compartir.");
-            return;
-        }
-
-        await compartirArchivo(currentUserId, selectedFileId, email, permiso);
-        closeShareModal();
-        });
-
-function renderFiles(items, modo = 'normal') {
-    const container = document.getElementById('filesContainer');
-    container.innerHTML = '';
-
-    items.forEach(item => {
-        const isFolder = item.type === 'folder' || item.tipo === 'carpeta';
-        const itemId = item._id || item.id || item.targetId; // 👈 ahora cubre todos los casos
-        const icon = isFolder ? '📁' : '📄';
-
-        const card = document.createElement('div');
-        card.className = 'file-card flex justify-between items-center p-3 rounded-lg bg-gray-100 shadow hover:bg-gray-200 transition cursor-pointer';
-
-        const left = document.createElement('div');
-        left.className = 'flex items-center space-x-2';
-        left.innerHTML = `
-            <span class="file-icon text-2xl">${icon}</span>
-            <span class="file-name">${item.name || item.nombre || '(sin nombre)'}</span>
-        `;
-
-        left.onclick = () => {
-            if (isFolder) loadFiles(itemId);
-            else openFile(item);
-        };
-
-        const right = document.createElement('div');
-        right.className = 'space-x-2 flex';
-
-        if (!isFolder) {
-            const btnOpen = document.createElement('button');
-            btnOpen.className = 'px-2 py-1 bg-gray-400 text-white rounded hover:bg-gray-500';
-            btnOpen.textContent = 'Abrir';
-            btnOpen.onclick = e => {
-                e.stopPropagation();
-                openFile({ ...item, _id: itemId }); // 👈 fuerza incluir el id
-            };
-            right.appendChild(btnOpen);
-        }
-
-        if (modo !== 'shared') {
-            const btnShare = document.createElement('button');
-            btnShare.className = 'px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600';
-            btnShare.textContent = 'Compartir';
-            btnShare.onclick = e => {
-                e.stopPropagation();
-                openShareModal(itemId);
-            };
-            right.appendChild(btnShare);
-        }
-
-        card.appendChild(left);
-        card.appendChild(right);
-        container.appendChild(card);
-    });
+/* ================== LOGIN / REGISTER UI ================== */
+function switchTab(tab) {
+  document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.login-form').forEach(f => f.classList.remove('active'));
+  if (tab === 'login') {
+    document.getElementById('tabLogin').classList.add('active');
+    document.getElementById('loginForm').classList.add('active');
+  } else {
+    document.getElementById('tabRegister').classList.add('active');
+    document.getElementById('registerForm').classList.add('active');
+  }
+  hideMessages();
 }
 
+/* Manejo de mensajes */
+function showError(msg) { const el = document.getElementById('loginError'); el.textContent = msg; el.classList.add('show'); }
+function showSuccess(msg) { const el = document.getElementById('loginSuccess'); el.textContent = msg; el.classList.add('show'); }
+function hideMessages() { document.getElementById('loginError').classList.remove('show'); document.getElementById('loginSuccess').classList.remove('show'); }
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  if (!email) { showError('Ingresa un email'); return; }
+  try {
+    const res = await fetch(`${API_URL}/auth/login`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email })
+    });
+    const data = await res.json();
+    if (res.ok && data.user) {
+      currentUser = data.user;
+      currentUserId = currentUser._id || currentUser.id;
+      localStorage.setItem('archivosya_user', JSON.stringify(currentUser));
+      showSuccess('¡Inicio de sesión exitoso!');
+      setTimeout(() => showApp(), 700);
+    } else {
+      showError(data.error || 'Credenciales inválidas');
+    }
+  } catch (err) {
+    console.error('Error login:', err);
+    showError('Error al conectar con el servidor');
+  }
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  const nombreUsuario = document.getElementById('registerName').value.trim();
+  const email = document.getElementById('registerEmail').value.trim();
+  if (!nombreUsuario || !email) { showError('Completa los datos'); return; }
+  try {
+    const res = await fetch(`${API_URL}/auth/register`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ nombreUsuario, email })
+    });
+    const data = await res.json();
+    if (res.ok && data.user) {
+      currentUser = data.user;
+      currentUserId = currentUser._id || currentUser.id;
+      localStorage.setItem('archivosya_user', JSON.stringify(currentUser));
+      showSuccess('Cuenta creada correctamente');
+      setTimeout(() => showApp(), 700);
+    } else {
+      showError(data.error || 'Error en el registro');
+    }
+  } catch (err) {
+    console.error('Error register:', err);
+    showError('Error al conectar con el servidor');
+  }
+}
+
+function handleLogout() {
+  if (!confirm('¿Cerrar sesión?')) return;
+  localStorage.removeItem('archivosya_user');
+  currentUser = null; currentUserId = null;
+  // limpiar UI
+  document.getElementById('appContainer').classList.remove('active');
+  document.getElementById('loginContainer').style.display = 'flex';
+  document.getElementById('loginForm').reset();
+  document.getElementById('registerForm').reset();
+  hideMessages();
+}
+
+/* Mostrar app */
+function showApp() {
+  if (!currentUser) return;
+  document.getElementById('loginContainer').style.display = 'none';
+  const app = document.getElementById('appContainer');
+  app.classList.add('active');
+  app.setAttribute('aria-hidden', 'false');
+  updateUserUI();
+  loadFiles();
+}
+
+function updateUserUI() {
+  if (!currentUser) return;
+  document.getElementById('userName').textContent = currentUser.nombreUsuario || currentUser.name || 'Usuario';
+  document.getElementById('userEmail').textContent = currentUser.email || '';
+  const avatar = document.getElementById('userAvatar');
+  const initial = (currentUser.nombreUsuario || currentUser.email || 'U')[0].toUpperCase();
+  avatar.textContent = initial;
+}
+
+function toggleUserMenu(force) {
+  const menu = document.getElementById('userMenu');
+  if (force === undefined) menu.classList.toggle('active');
+  else menu.classList.toggle('active', Boolean(force));
+}
+document.addEventListener('click', (e) => {
+  const userSection = document.getElementById('userSection');
+  if (userSection && !userSection.contains(e.target)) toggleUserMenu(false);
+});
+
+/* ================== UTIL: CARGA / UI ================== */
+function showLoading() { document.getElementById('loadingIndicator').classList.remove('hidden'); document.getElementById('filesContainer').classList.add('hidden'); document.getElementById('emptyState').classList.add('hidden'); }
+function hideLoading() { document.getElementById('loadingIndicator').classList.add('hidden'); document.getElementById('filesContainer').classList.remove('hidden'); }
+function showEmptyState() { document.getElementById('emptyState').classList.remove('hidden'); document.getElementById('filesContainer').classList.add('hidden'); }
+function hideEmptyState() { document.getElementById('emptyState').classList.add('hidden'); document.getElementById('filesContainer').classList.remove('hidden'); }
+
+/* ================== RENDER & INTERACCIÓN DE ARCHIVOS ================== */
+async function loadFiles(folderId = null) {
+  if (!currentUser) return;
+  showLoading();
+  currentFolderId = folderId || currentUser.carpetaPersonalId || 'root';
+  try {
+    const [filesRes, foldersRes] = await Promise.all([
+      fetch(`${API_URL}/files/folder/${currentFolderId || 'root'}`).then(r => r.json()),
+      fetch(`${API_URL}/folders?parentId=${currentFolderId || 'root'}`).then(r => r.json())
+    ]);
+    const files = Array.isArray(filesRes) ? filesRes : (filesRes.files || []);
+    const folders = Array.isArray(foldersRes) ? foldersRes : (foldersRes.folders || []);
+    const items = [ ...folders.map(f => ({ ...f, type: 'folder' })), ...files.map(f => ({ ...f, type: 'file' })) ];
+    hideLoading();
+    if (!items || items.length === 0) { showEmptyState(); return; }
+    hideEmptyState();
+    renderFiles(items);
+  } catch (err) {
+    console.error('Error loadFiles:', err);
+    hideLoading();
+    alert('Error al cargar archivos (revisa la consola).');
+  }
+}
+
+/* renderFiles: unifica distintos formatos de objeto (._id, .id, .targetId) */
+function renderFiles(items, modo = 'normal') {
+  const container = document.getElementById('filesContainer');
+  container.innerHTML = '';
+  items.forEach(item => {
+    const isFolder = item.type === 'folder' || item.tipo === 'carpeta';
+    const itemId = item._id || item.id || item.targetId || item.folderId || item._id;
+    const icon = isFolder ? '📁' : '📄';
+
+    const card = document.createElement('div');
+    card.className = 'file-card';
+    card.dataset.id = itemId;
+
+    // si el item viene marcado como locked (por API), reflejarlo
+    if (item.locked) card.classList.add('locked');
+
+    const left = document.createElement('div');
+    left.style.display = 'flex'; left.style.alignItems = 'center';
+    left.innerHTML = `
+      <div class="file-icon ${isFolder ? 'folder' : 'file'}">${icon}</div>
+      <div style="min-width:0">
+        <div style="font-weight:600; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+          ${escapeHtml(item.name || item.nombre || '(sin nombre)')}
+        </div>
+        <div style="font-size:12px; color:#777;">${isFolder ? 'Carpeta' : (item.mimeType || '')}</div>
+      </div>
+    `;
+
+    left.onclick = () => {
+      if (isFolder) loadFiles(itemId);
+      else openFile({ ...item, _id: itemId });
+    };
+
+    const right = document.createElement('div');
+    right.style.display = 'flex'; right.style.gap = '8px';
+
+    if (!isFolder) {
+      const btnOpen = document.createElement('button');
+      btnOpen.className = 'btn btn-secondary';
+      btnOpen.textContent = 'Abrir';
+      btnOpen.onclick = (e) => { e.stopPropagation(); openFile({ ...item, _id: itemId }); };
+      right.appendChild(btnOpen);
+    }
+    if (modo !== 'shared') {
+      const btnShare = document.createElement('button');
+      btnShare.className = 'btn btn-primary';
+      btnShare.textContent = 'Compartir';
+      btnShare.onclick = (e) => { e.stopPropagation(); openShareModal(itemId); };
+      right.appendChild(btnShare);
+    }
+
+    card.appendChild(left);
+    card.appendChild(right);
+    container.appendChild(card);
+  });
+}
+
+/* ================== APERTURA / BLOQUEO / EDICIÓN ================== */
+let ydoc = null;
+let ytext = null;
+let ignoreLocalEvent = false;
 
 async function openFile(file) {
-    console.log("🧩 Archivo recibido en openFile:", file);
+  const fileId = file?._id || file?.id || file?.targetId;
+  if (!fileId) return alert('Archivo sin ID.');
 
-    // Aseguramos ID válido sin importar el origen
-    const fileId = file?._id || file?.id || file?.targetId;
-    if (!fileId) {
-        alert('❌ No se encontró ID del archivo.');
-        console.warn("fileId no encontrado. Objeto recibido:", file);
-        return;
-    }
-// 🔹 Detectar si el archivo es compartido y con qué permiso
-const permiso = file.permission || file.permiso || null;
+  // Cerrar documento anterior
+  if (ydoc) await closeAndUnlockEditModal();
 
-if (permiso !== null) {
+  currentFileId = fileId;
+  const docName = `archivo-${fileId}`;
+
+  // Crear nuevo documento Yjs
+  ydoc = new Y.Doc();
+  ytext = ydoc.getText('content');
+
+  // 🔌 Desvincular listeners previos
+  socket.off('yjs-update');
+
+  // Conectarse al documento colaborativo
+  socket.emit('yjs-connect', docName);
+
+  // Escuchar actualizaciones de otros usuarios
+  socket.on('yjs-update', (update) => {
+    Y.applyUpdate(ydoc, new Uint8Array(update));
+  });
+
+  // Recibir estado inicial del documento
+  socket.once('yjs-state', (state) => {
+    Y.applyUpdate(ydoc, new Uint8Array(state));
+
     const textarea = document.getElementById('editContent');
-    const saveBtn = document.querySelector('#editModal .btn-primary');
+    textarea.value = ytext.toString();
 
-    if (permiso === 4) {
-        // Solo lectura
-        textarea.readOnly = true;
-        textarea.style.backgroundColor = '#f3f3f3';
-        saveBtn.style.display = 'none';
+    // Escuchar cambios remotos
+    const observer = () => {
+      if (ignoreLocalEvent) return;
+      ignoreLocalEvent = true;
+      textarea.value = ytext.toString();
+      ignoreLocalEvent = false;
+    };
+    ytext.observe(observer);
+    window.__currentYjsObserver = observer;
+  });
+
+
+  // ✅ Enviar SOLO updates incrementales
+ydoc.on('update', (update) => {
+  socket.emit('yjs-update', Array.from(update)); // Uint8Array → Array
+});
+if (window.__autosaveInterval) clearInterval(window.__autosaveInterval);
+window.__autosaveInterval = setInterval(() => {
+  persistFileToDB();
+}, 20000);
+const textarea = document.getElementById('editContent');
+textarea.value = ytext.toString();
+// ✅ NO enviar nada dentro del event listener de textarea
+textarea.addEventListener('input', () => {
+  if (ignoreLocalEvent) return;
+  ignoreLocalEvent = true;
+  const localValue = textarea.value;
+  const remoteValue = ytext.toString();
+  if (localValue !== remoteValue) {
+    ytext.delete(0, ytext.length);
+    ytext.insert(0, localValue);
+    // ✅ El update se enviará automáticamente vía ydoc.on('update')
+  }
+  ignoreLocalEvent = false;
+});
+
+  // Cargar metadatos (nombre y permisos)
+  const resp = await fetch(`${API_URL}/files/${fileId}?userId=${currentUserId}`);
+  if (!resp.ok) throw new Error('Archivo no encontrado');
+  const full = await resp.json();
+  document.getElementById('editName').value = full.name || '';
+  applyPermissionToEditor(full.permission || 4);
+
+  showModal('editModal');
+}
+
+async function closeAndUnlockEditModal() {
+  // Persistir en DB (opcional)
+  await persistFileToDB();
+
+  if (window.__autosaveInterval) {
+    clearInterval(window.__autosaveInterval);
+    window.__autosaveInterval = null;
+  }
+  // Dejar de observar y limpiar documento
+  if (ytext && window.__currentYjsObserver) ytext.unobserve(window.__currentYjsObserver);
+  if (ydoc) {
+    ydoc.destroy();
+    ydoc = null;
+    ytext = null;
+  }
+  currentFileId = null;
+  socket.off('yjs-update');
+  closeModal('editModal');
+}
+
+function applyPermissionToEditor(permiso) {
+  const textarea = document.getElementById('editContent');
+  textarea.readOnly = (permiso === 4); // ✅ solo lectura = 4
+}
+async function persistFileToDB() {
+  if (!currentFileId || !ydoc || !ytext) return;
+
+  try {
+    // Convertir el documento Yjs a texto plano
+    const content = ytext.toString();
+
+    // Enviar a tu API (PUT /files/:id)
+    const res = await fetch(`${API_URL}/files/${currentFileId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content, userId: currentUserId })
+    });
+
+    if (!res.ok) {
+      console.warn(`⚠️ Error al guardar ${currentFileId}: ${res.status}`);
     } else {
-        // Lectura/escritura o total
-        textarea.readOnly = false;
-        textarea.style.backgroundColor = 'white';
-        saveBtn.style.display = 'inline-block';
+      console.log(`💾 Archivo ${currentFileId} persistido correctamente`);
     }
-} else {
-    // Si no vino permiso (por archivos propios), dejar editable
-    document.getElementById('editContent').readOnly = false;
-    document.querySelector('#editModal .btn-primary').style.display = 'inline-block';
+  } catch (err) {
+    console.error('❌ persistFileToDB error:', err);
+  }
 }
 
-    try {
-        // Llamada al backend para obtener el contenido actualizado
-        const response = await fetch(`${API_URL}/files/${fileId}?userId=${currentUser._id}`);
-        if (!response.ok) {
-            throw new Error(`Error HTTP ${response.status}`);
-        }
+/* Guardar archivo (PUT) */
+async function saveFile() {
+  if (!currentFileId) { alert('No hay archivo seleccionado.'); return; }
+  if (!currentUserId) { alert('Debes iniciar sesión'); return; }
+  const content = document.getElementById('editContent').value;
 
-        const fullFile = await response.json();
-        console.log("📄 Archivo cargado desde backend:", fullFile);
+  const saveBtn = document.getElementById('saveFileBtn');
+  saveBtn.disabled = true; saveBtn.textContent = 'Guardando...';
 
-        // 🔹 Guardamos el id en variable global (para saveFile)
-        currentFileId = fullFile._id || fullFile.id || fileId;
+  try {
+    const res = await fetch(`${API_URL}/files/${currentFileId}`, {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ content, userId: currentUserId })
+    });
+    const text = await res.text().catch(()=>null);
+    let body = text;
+    try { body = text ? JSON.parse(text) : null; } catch(e){}
 
-        // 🔹 Rellenamos el modal
-        document.getElementById('editName').value = fullFile.name || file.name;
-        document.getElementById('editContent').value = fullFile.content || '';
-        document.getElementById('editModal').classList.add('active');
-
-    } catch (error) {
-        console.error("💥 Error en openFile:", error);
-        alert('❌ No se pudo abrir el archivo.');
+    if (res.ok) {
+      alert('Archivo guardado ✅');
+      // tras guardar, desbloqueamos y recargamos
+      await closeAndUnlockEditModal();
+      await loadFiles(currentFolderId);
+    } else {
+      console.error('PUT failed', res.status, body);
+      alert('Error al guardar (revisa consola).');
     }
+  } catch (err) {
+    console.error('Error saveFile:', err);
+    alert('No se pudo conectar al servidor.');
+  } finally {
+    saveBtn.disabled = false; saveBtn.textContent = 'Guardar';
+  }
 }
 
-
-
-        async function saveFile() {
-    const content = document.getElementById('editContent').value;
-
-    // Validaciones básicas antes de intentar el PUT
-    if (!currentFileId) {
-        alert('❗ No hay archivo seleccionado. Abre un archivo antes de guardar.');
-        return;
-    }
-    if (!currentUser || !currentUser._id) {
-        alert('❗ Usuario no autenticado. Inicia sesión e inténtalo de nuevo.');
-        return;
-    }
-
-    // Opcional: feedback visual
-    const saveBtn = Array.from(document.querySelectorAll('.btn-primary'))
-                         .find(b => b.onclick && b.onclick.toString().includes('saveFile')) || null;
-    if (saveBtn) {
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'Guardando...';
-    }
-
-    try {
-        const response = await fetch(`${API_URL}/files/${currentFileId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content, userId: currentUser._id })
-        });
-        
-        const text = await response.text().catch(() => null);
-        // intenta parsear JSON si viene así
-        let body = text;
-        try { body = text ? JSON.parse(text) : null; } catch (e) {}
-
-        if (response.ok) {
-            alert('✅ Archivo guardado');
-            closeModal('editModal');
-            loadFiles(currentFolderId);
-        } else {
-            // muestra info útil para depuración
-            console.error('PUT /files/:id falló', { status: response.status, body });
-            alert(`❌ Error al guardar (status ${response.status}). Revisa la consola para más detalles.`);
-        }
-    } catch (error) {
-        console.error('Error en fetch PUT:', error);
-        alert('❌ Error al guardar: no se pudo conectar con el servidor.');
-    } finally {
-        if (saveBtn) {
-            saveBtn.disabled = false;
-            saveBtn.textContent = 'Guardar';
-        }
-    }
+/* ================== UNLOCK / CERRAR MODAL ================== */
+async function unlockFile(fileId) {
+  try {
+    await fetch(`${API_URL}/files/${fileId}/unlock`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ userId: currentUserId })
+    });
+    socket.emit('fileUnlockRequested', { fileId });
+  } catch (err) {
+    console.warn('unlockFile error:', err);
+  }
 }
 
-
-        function showNewModal() {
-            document.getElementById('newModal').classList.add('active');
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        async function createNew() {
-            const type = document.getElementById('newType').value;
-            const name = document.getElementById('newName').value.trim();
-
-            if (!name) {
-                alert('⚠️ Ingresa un nombre');
-                return;
-            }
-
-            try {
-                const endpoint = type === 'file' ? 'files' : 'folders';
-                const body = type === 'file'
-                    ? { name, userId: currentUser._id, folderId: currentFolderId }
-                    : { name, userId: currentUser._id, parentId: currentFolderId };
-
-                const response = await fetch(`${API_URL}/${endpoint}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body)
-                });
-
-                if (response.ok) {
-                    closeModal('newModal');
-                    document.getElementById('newName').value = '';
-                    loadFiles(currentFolderId);
-                } else {
-                    alert('❌ Error al crear');
-                }
-            } catch (error) {
-                alert('❌ Error al crear');
-            }
-        }
-
-        function showLoading() {
-            document.getElementById('loadingIndicator').style.display = 'block';
-            document.getElementById('filesContainer').style.display = 'none';
-            document.getElementById('emptyState').style.display = 'none';
-        }
-
-        function hideLoading() {
-            document.getElementById('loadingIndicator').style.display = 'none';
-            document.getElementById('filesContainer').style.display = 'grid';
-        }
-
-        function showEmptyState() {
-            document.getElementById('emptyState').style.display = 'block';
-            document.getElementById('filesContainer').style.display = 'none';
-        }
-
-        function hideEmptyState() {
-            document.getElementById('emptyState').style.display = 'none';
-        }
-
-        function showProfile() {
-            alert(`👤 Perfil\n\nNombre: ${currentUser.nombreUsuario}\nEmail: ${currentUser.email}`);
-            toggleUserMenu(false);
-        }
-
-async function loadShared() {
-    showLoading(); // si tenés un spinner, opcional
-
-    try {
-        if (!currentUserId) {
-            alert("No hay usuario logueado");
-            hideLoading();
-            return;
-        }
-
-        const response = await fetch(`${API_URL}/compartidos/${currentUserId}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const data = await response.json();
-        hideLoading();
-
-        if (!data || data.length === 0) {
-            document.getElementById('filesContainer').innerHTML =
-                `<p class="text-gray-500 italic">📭 No tienes archivos compartidos contigo.</p>`;
-            return;
-        }
-
-        // 👇 renderiza usando tu función combinada
-        renderFiles(data, 'shared');
-
-    } catch (error) {
-        console.error("💥 Error en loadShared:", error);
-        hideLoading();
-        alert("Error al cargar archivos compartidos.");
-    }
+async function closeAndUnlockEditModal() {
+  if (currentFileId && currentUserId) {
+    await unlockFile(currentFileId);
+    currentFileId = null;
+  }
+  closeModal('editModal');
 }
 
+/* Cerrar modal estándar */
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  modal.classList.remove('active');
+  modal.setAttribute('aria-hidden', 'true');
+}
 
-// ===============================
-// 🌐 CONFIGURACIÓN DE API
-// ===============================
+/* Mostrar modal */
+function showModal(modalId) {
+  const modal = document.getElementById(modalId);
+  modal.classList.add('active');
+  modal.setAttribute('aria-hidden', 'false');
+}
 
+/* ================== CREAR NUEVO ================== */
+async function createNew() {
+  const type = document.getElementById('newType').value;
+  const name = document.getElementById('newName').value.trim();
+  if (!name) { alert('Ingresa un nombre.'); return; }
+  try {
+    const endpoint = type === 'file' ? 'files' : 'folders';
+    const body = type === 'file' ? { name, userId: currentUserId, folderId: currentFolderId } : { name, userId: currentUserId, parentId: currentFolderId };
+    const res = await fetch(`${API_URL}/${endpoint}`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    if (res.ok) {
+      closeModal('newModal');
+      document.getElementById('newName').value = '';
+      loadFiles(currentFolderId);
+    } else {
+      const err = await res.text().catch(()=>null);
+      console.error('createNew failed', err);
+      alert('Error al crear (revisa consola).');
+    }
+  } catch (err) {
+    console.error('Error createNew:', err);
+    alert('No se pudo crear (revisa consola).');
+  }
+}
 
-// ===============================
-// 📤 COMPARTIR UN RECURSO
-// ===============================
+/* ================== MODAL COMPARTIR ================== */
+function openShareModal(targetId) {
+  selectedShareTargetId = targetId;
+  document.getElementById('shareEmail').value = '';
+  document.getElementById('sharePermission').value = '4';
+  showModal('shareModal');
+}
+
+function closeShareModal() {
+  selectedShareTargetId = null;
+  closeModal('shareModal');
+}
+
+document.getElementById('cancelShareBtn').addEventListener('click', closeShareModal);
+document.getElementById('confirmShareBtn').addEventListener('click', async () => {
+  const email = document.getElementById('shareEmail').value.trim();
+  const permiso = Number(document.getElementById('sharePermission').value);
+  if (!email) { alert('Ingresa un email válido'); return; }
+  if (!selectedShareTargetId) { alert('No hay archivo seleccionado'); return; }
+  await compartirArchivo(currentUserId, selectedShareTargetId, email, permiso);
+  closeShareModal();
+});
+
+/* ================== API: Compartir & gestión ================== */
 async function compartirArchivo(ownerId, targetId, destinatarioEmail, permiso) {
-    try {
-        const response = await fetch(`${API_URL}/compartidos/compartir`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ownerId, targetId, destinatarioEmail, permiso }),
-        });
-
-        if (!response.ok) {
-            const err = await response.text();
-            throw new Error(`Error al compartir archivo: ${err}`);
-        }
-
-        const data = await response.json();
-        alert(`✅ ${data.message}`);
-        console.log('Recurso compartido:', data.ref);
-        return data.ref;
-
-    } catch (error) {
-        console.error('❌ Error al compartir:', error);
-        alert('No se pudo compartir el archivo.');
-    }
+  try {
+    const res = await fetch(`${API_URL}/compartidos/compartir`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ ownerId, targetId, destinatarioEmail, permiso })
+    });
+    if (!res.ok) { const t = await res.text(); throw new Error(t || 'HTTP ' + res.status); }
+    const data = await res.json();
+    alert(data.message || 'Compartido correctamente');
+    return data.ref;
+  } catch (err) {
+    console.error('compartirArchivo error:', err);
+    alert('No se pudo compartir (revisa consola).');
+  }
 }
 
-
-// ===============================
-// 📥 OBTENER ARCHIVOS COMPARTIDOS CONMIGO
-// ===============================
 async function obtenerCompartidos(userId) {
-    try {
-        console.log("🔍 Cargando compartidos de usuario:", userId);
-        const response = await fetch(`${API_URL}/compartidos/${userId}`);
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const data = await response.json();
-        console.log("📦 Archivos compartidos recibidos:", data);
-        return data;
-
-    } catch (error) {
-        console.error('💥 Error al obtener compartidos:', error);
-        alert('Error al cargar los archivos compartidos.');
-        return [];
-    }
+  try {
+    const res = await fetch(`${API_URL}/compartidos/${userId}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (err) {
+    console.error('obtenerCompartidos error:', err);
+    alert('Error al cargar compartidos');
+    return [];
+  }
 }
 
-
-// ===============================
-// ✏️ CAMBIAR PERMISO DE ARCHIVO COMPARTIDO
-// ===============================
+/* cambiar permiso compartido */
 async function cambiarPermiso(targetId, sharedWithId, nuevoPermiso) {
-    try {
-        const response = await fetch(`${API_URL}/compartidos/permiso`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ targetId, sharedWithId, nuevoPermiso }),
-        });
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const data = await response.json();
-        alert('🔒 Permiso actualizado correctamente.');
-        return data;
-
-    } catch (error) {
-        console.error('💥 Error al cambiar permiso:', error);
-        alert('Error al cambiar el permiso del recurso.');
-    }
+  try {
+    const res = await fetch(`${API_URL}/compartidos/permiso`, {
+      method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ targetId, sharedWithId, nuevoPermiso })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    alert('Permiso actualizado');
+    return data;
+  } catch (err) {
+    console.error('cambiarPermiso error:', err);
+    alert('No se pudo actualizar permiso');
+  }
 }
 
-
-// ===============================
-// 🗑️ ELIMINAR UN ARCHIVO COMPARTIDO
-// ===============================
+/* eliminar acceso compartido */
 async function eliminarCompartido(targetId, sharedWithId) {
-    try {
-        const response = await fetch(`${API_URL}/compartidos`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ targetId, sharedWithId }),
-        });
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        alert('🗑️ Recurso compartido eliminado correctamente.');
-        return await response.json();
-
-    } catch (error) {
-        console.error('💥 Error al eliminar compartido:', error);
-        alert('Error al eliminar el acceso compartido.');
-    }
+  try {
+    const res = await fetch(`${API_URL}/compartidos`, {
+      method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ targetId, sharedWithId })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    alert('Acceso eliminado');
+    return await res.json();
+  } catch (err) {
+    console.error('eliminarCompartido error:', err);
+    alert('No se pudo eliminar el compartido');
+  }
 }
 
-
-// ===============================
-// ✉️ ENVIAR SOLICITUD DE COMPARTICIÓN (opcional)
-// ===============================
-// Esta sería una versión "pendiente de aprobación" para el futuro
+/* enviar solicitud de compartición (opcional) */
 async function enviarSolicitudCompartir(fromUserId, toUserEmail, targetId, permiso) {
-    try {
-        const response = await fetch(`${API_URL}/compartidos/solicitud`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fromUserId, toUserEmail, targetId, permiso }),
-        });
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const data = await response.json();
-        alert('📨 Solicitud enviada correctamente.');
-        return data;
-
-    } catch (error) {
-        console.error('💥 Error al enviar solicitud:', error);
-        alert('Error al enviar la solicitud.');
-    }
+  try {
+    const res = await fetch(`${API_URL}/compartidos/solicitud`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ fromUserId, toUserEmail, targetId, permiso })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    alert('Solicitud enviada');
+    return data;
+  } catch (err) {
+    console.error('enviarSolicitudCompartir error:', err);
+    alert('No se pudo enviar solicitud');
+  }
 }
 
-
-// ===============================
-// 🧩 FUNCIÓN PARA CARGAR COMPARTIDOS EN LA INTERFAZ
-// ===============================
+/* ================== CARGAR COMPARTIDOS ================== */
 async function loadShared() {
-    showLoading();
-
-    try {
-        const items = await obtenerCompartidos(currentUserId);
-        hideLoading();
-
-        if (!items || items.length === 0) {
-            showEmptyState();
-        } else {
-            hideEmptyState();
-            renderFiles(items);
-        }
-    } catch (error) {
-        console.error('💥 Error en loadShared:', error);
-        hideLoading();
-        alert('Error al cargar los compartidos.');
-    }
+  showLoading();
+  try {
+    if (!currentUserId) { alert('No hay usuario logueado'); hideLoading(); return; }
+    const items = await obtenerCompartidos(currentUserId);
+    hideLoading();
+    if (!items || items.length === 0) { showEmptyState(); return; }
+    hideEmptyState();
+    renderFiles(items, 'shared');
+  } catch (err) {
+    console.error('loadShared error:', err);
+    hideLoading();
+    alert('Error al cargar compartidos');
+  }
 }
 
-    </script>
+/* ================== PERFIL ================== */
+function showProfile() {
+  if (!currentUser) return;
+  alert(`Perfil\n\nNombre: ${currentUser.nombreUsuario || currentUser.name}\nEmail: ${currentUser.email}`);
+  toggleUserMenu(false);
+}
 
+/* ================== AYUDAS ================== */
+function escapeHtml(s) {
+  if (s === undefined || s === null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
+}
+
+/* ================== Limpieza al cerrar editModal con botón cancelar (desbloquear) ================== */
+document.querySelectorAll('#editModal .btn-secondary').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    // intento de desbloquear si hay un archivo abierto
+    if (currentFileId && currentUserId) {
+      await unlockFile(currentFileId);
+      currentFileId = null;
+    }
+    closeModal('editModal');
+  });
+});
+
+/* ================== Prevención de recarga con archivo bloqueado ================== */
+window.addEventListener('beforeunload', async (e) => {
+  if (currentFileId) {
+    // intentar unlock rápido
+    try { await fetch(`${API_URL}/files/${currentFileId}/unlock`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ userId: currentUserId }) }); } catch(e){}
+    // dejar mensaje por seguridad (algunos navegadores ignoran custom text)
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+function showNewModal() {
+  document.getElementById('newName').value = '';
+  document.getElementById('newType').value = 'file';
+  showModal('newModal');
+  // enfocar input después de que se muestre
+  setTimeout(() => {
+    const inp = document.getElementById('newName');
+    if (inp) inp.focus();
+  }, 150);
+}
+
+</script>
 </body>
 </html>

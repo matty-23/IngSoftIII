@@ -8,7 +8,6 @@ export interface IFileDocument extends Document {
     state: 'idle' | 'open' | 'editing';
     version: number;
     createdAt: Date;
-    updatedAt: Date;
 }
 
 const FileSchema = new Schema<IFileDocument>({
