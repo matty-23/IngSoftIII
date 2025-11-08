@@ -31,14 +31,15 @@ export class VersionService {
     // PROTOTYPE PATTERN: Crear versión (clon del archivo)
     async createVersion(
         fileId: string, 
-        content: string, 
+        content: string | null | undefined,
         userId: string,
         versionNumber: number
     ): Promise<void> {
+        const safeContent = content == null ? '' : String(content);
         await VersionModel.create({
             fileId,
             versionNumber,
-            content,
+            content:safeContent,
             createdBy: userId
         });
         console.log(`✅ Versión v${versionNumber} creada para archivo ${fileId}`);

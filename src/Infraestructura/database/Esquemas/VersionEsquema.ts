@@ -8,18 +8,33 @@ export interface IVersionDocument extends Document {
     createdAt: Date;
 }
 
+// ✅ Eliminar modelo previo (bypass TS readonly de forma segura)
+const deleteModel = (modelName: string) => {
+    if (mongoose.models[modelName]) {
+        console.warn(`⚠️ Eliminando modelo "${modelName}" previo para forzar recarga`);
+        delete (mongoose.models as any)[modelName];
+        delete (mongoose.connection.models as any)[modelName];
+    }
+};
+
+deleteModel('Version');
+
 const VersionSchema = new Schema<IVersionDocument>({
     fileId: { type: Schema.Types.ObjectId, ref: 'File', required: true },
     versionNumber: { type: Number, required: true },
-    content: { type: String, required: true },
+    content: { 
+        type: String, 
+        required: true, 
+        default: ' ' 
+    },
     createdBy: { type: String, required: true }
 }, { timestamps: true });
-// Índice compuesto único: No puede haber versiones duplicadas del mismo archivo
-VersionSchema.index(
-    { fileId: 1, versionNumber: 1 }, 
-    { unique: true }
-);
 
-// Índice para ordenar por versión
+VersionSchema.index({ fileId: 1, versionNumber: 1 }, { unique: true });
 VersionSchema.index({ fileId: 1, versionNumber: -1 });
-export const VersionModel = mongoose.model<IVersionDocument>('Version', VersionSchema);
+
+const VersionModel = mongoose.model<IVersionDocument>('Version', VersionSchema);
+
+console.log('✅ [DEBUG] VersionModel RECARGADO con default en content1');
+
+export { VersionModel };

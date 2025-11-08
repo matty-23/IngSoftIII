@@ -96,9 +96,13 @@
     .hidden { display:none; }
     .flex { display:flex; align-items:center; justify-content:center; }
   </style>
-  <!-- Socket.IO client (asegurate que la versión exista en tu app) -->
+  
+  <script type="module">
+  import * as Y from 'https://cdn.jsdelivr.net/npm/yjs@13.6.5/+esm';
+  window.Y = Y; // expose globally if legacy code needs it
+</script>
+
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/yjs@13.6.17/dist/y.min.js"></script>
 </head>
 <body>
 
@@ -254,9 +258,9 @@
 
 <script>
 /* ================== CONFIG ================== */
-//const API_URL = 'http://192.168.0.101:3000/api';
-const API_URL = 'http://10.8.72.168:3000/api';
-const socket = io('http://10.8.72.168:3000');
+const API_URL = 'http://192.168.0.11:3000/api';
+const socket = io('http://192.168.0.11:3000');
+
 /* ================== ESTADO GLOBAL ================== */
 let currentUser = null;
 let currentUserId = null;
@@ -495,6 +499,7 @@ function renderFiles(items, modo = 'normal') {
 }
 
 /* ================== APERTURA / BLOQUEO / EDICIÓN ================== */
+
 let ydoc = null;
 let ytext = null;
 let ignoreLocalEvent = false;

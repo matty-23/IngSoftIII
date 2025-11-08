@@ -148,8 +148,9 @@ async saveCollaborativeContent(id: string, content: string, userId: string): Pro
     }
   }
 
+    const safeContent = content == null ? '' : String(content);
   // Actualizar contenido directamente (sin lock ni optimistic)
-  fileDoc.content = content;
+  fileDoc.content = safeContent;
   fileDoc.state = 'idle';
   fileDoc.version += 1;
   await fileDoc.save();

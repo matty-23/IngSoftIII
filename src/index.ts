@@ -1,6 +1,3 @@
-import express from 'express';
-import http from 'http';
-import cors from 'cors';
 import { connectDB } from './Infraestructura/database/conexion';
 import fileRoutes from './controllers/DocumentoController';
 import auditRoutes from './controllers/AuditoriaController';
@@ -9,18 +6,22 @@ import userRoutes from './controllers/UsuarioController';
 import compartRoutes from './controllers/CompartidoController';
 import authRoutes from './controllers/AuthController'; 
 import { initSocket } from './socket'; 
+import express from 'express';
+import http from 'http';
+import cors from 'cors';
 
 const app = express();
 const server = http.createServer(app); // ✅ Envolver Express en HTTP
 const PORT = 3000;
 
+const io = initSocket(server);
 // 🧱 Middleware
 app.use(cors({
   origin: [
-    "http://10.8.72.168:51019", // tu frontend exacto
-    /^http:\/\/localhost:\d+$/
-    // /^http:\/\/localhost:\d+$/,        // localhost
-    ///^http:\/\/10\.8\.0\.\d+:\d+$/  // red local (192.168.0.x)
+    /* /^http:\/\/localhost:\d+$/,
+    /^http:\/\/10\.8\.72\.\d+:\d+$/ */
+     /^http:\/\/localhost:\d+$/,        // localhost
+    /^http:\/\/192\.168\.0\.\d+:\d+$/  // red local (192.168.0.x)
   ], 
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
@@ -33,15 +34,13 @@ app.use((req, res, next) => {
   next();
 });
 
-initSocket(server);
-
 // Routes
 app.use('/api/auth', authRoutes);        
 app.use('/api/files', fileRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/folders', folderRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/compartidos', compartRoutes); // Corregido: faltaba el '/'
+app.use('/api/compartidos', compartRoutes); 
 
 // Health check
 app.get('/health', (req, res) => {

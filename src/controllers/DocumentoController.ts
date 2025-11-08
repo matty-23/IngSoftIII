@@ -65,18 +65,16 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { content, userId } = req.body;
+        const { userId } = req.body;
+        let content = req.body.content;
+
+        // Normalización segura:
+        if (content == null || typeof content !== 'string') {
+        content = '';}
 
         if (!userId) {
             return res.status(400).json({ error: 'userId es requerido' });
         }
-
-        // Verificar permiso de escritura (STRATEGY PATTERN)
- /*        const canWrite = await permissionService.checkPermission(userId, id, 'write');
-        if (!canWrite) {
-            return res.status(403).json({ error: 'No tienes permiso para editar este archivo' });
-        } */
-
         const file = await fileService.updateContent(id, content, userId);
         res.json(file);
     } catch (error: any) {
@@ -149,10 +147,10 @@ router.get('/folder/:folderId', async (req: Request, res: Response) => {
 router.put('/:id/persist', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { content, userId } = req.body;
-
-    if (!content || !userId) {
-      return res.status(400).json({ error: 'content y userId son requeridos' });
+    const { userId, content } = req.body;
+  
+    if (!userId) {
+      return res.status(400).json({ error: 'userId son requeridos' });
     }
 
     // Guardar el contenido (sin versionado optimista ni bloqueo)

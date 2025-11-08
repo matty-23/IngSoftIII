@@ -12,7 +12,7 @@ export interface IFileDocument extends Document {
 
 const FileSchema = new Schema<IFileDocument>({
     name: { type: String, required: true },
-    content: { type: String, required:true},
+    content: { type: String, required:true, default:' '},
     folderId: { type: Schema.Types.ObjectId, ref: 'Folder', default: null },
     ownerId: { type: String, required: true },
     state: { type: String, enum: ['idle', 'open', 'editing'], default: 'idle' },
