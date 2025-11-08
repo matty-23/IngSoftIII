@@ -35,7 +35,18 @@ export class VersionService {
         userId: string,
         versionNumber: number
     ): Promise<void> {
-        const safeContent = content == null ? '' : String(content);
+          // ✅ Normalización robusta del contenido
+  let safeContent: string;
+  if (content == null) {
+    safeContent = ' ';
+  } else if (typeof content !== 'string') {
+    safeContent = String(content);
+  } else {
+    safeContent = content.trim().length === 0 ? ' ' : content;
+  }
+
+  console.log(`[DEBUG] saveCollaborativeContent - Guardando ${safeContent.length} caracteres`);
+
         await VersionModel.create({
             fileId,
             versionNumber,

@@ -65,12 +65,8 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { userId } = req.body;
-        let content = req.body.content;
+        const { userId, content } = req.body;
 
-        // Normalización segura:
-        if (content == null || typeof content !== 'string') {
-        content = '';}
 
         if (!userId) {
             return res.status(400).json({ error: 'userId es requerido' });

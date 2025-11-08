@@ -24,7 +24,7 @@ export class Documento implements Componente{
 
     // PROTOTYPE PATTERN: Clonar para crear versión
     clone(): Documento {
-        const safeContent = this.content == null ? '' : String(this.content);
+        const safeContent = this.content == null ? ' ' : String(this.content);
         return new Documento(
             this.id,
             this.name,

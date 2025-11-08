@@ -503,6 +503,7 @@ function renderFiles(items, modo = 'normal') {
 let ydoc = null;
 let ytext = null;
 let ignoreLocalEvent = false;
+let ytextObserver = null;
 
 async function openFile(file) {
   const fileId = file?._id || file?.id || file?.targetId;
@@ -512,96 +513,80 @@ async function openFile(file) {
   if (ydoc) await closeAndUnlockEditModal();
 
   currentFileId = fileId;
-  const docName = `archivo-${fileId}`;
-
-  // Crear nuevo documento Yjs
-  ydoc = new Y.Doc();
-  ytext = ydoc.getText('content');
-
-  // 🔌 Desvincular listeners previos
-  socket.off('yjs-update');
-
-  // Conectarse al documento colaborativo
-  socket.emit('yjs-connect', docName);
-
-  // Escuchar actualizaciones de otros usuarios
-  socket.on('yjs-update', (update) => {
-    Y.applyUpdate(ydoc, new Uint8Array(update));
-  });
-
-  // Recibir estado inicial del documento
-  socket.once('yjs-state', (state) => {
-    Y.applyUpdate(ydoc, new Uint8Array(state));
-
-    const textarea = document.getElementById('editContent');
-    textarea.value = ytext.toString();
-
-    // Escuchar cambios remotos
-    const observer = () => {
-      if (ignoreLocalEvent) return;
-      ignoreLocalEvent = true;
-      textarea.value = ytext.toString();
-      ignoreLocalEvent = false;
-    };
-    ytext.observe(observer);
-    window.__currentYjsObserver = observer;
-  });
-
-
-  // ✅ Enviar SOLO updates incrementales
-ydoc.on('update', (update) => {
-  socket.emit('yjs-update', Array.from(update)); // Uint8Array → Array
-});
-if (window.__autosaveInterval) clearInterval(window.__autosaveInterval);
-window.__autosaveInterval = setInterval(() => {
-  persistFileToDB();
-}, 20000);
-const textarea = document.getElementById('editContent');
-textarea.value = ytext.toString();
-// ✅ NO enviar nada dentro del event listener de textarea
-textarea.addEventListener('input', () => {
-  if (ignoreLocalEvent) return;
-  ignoreLocalEvent = true;
-  const localValue = textarea.value;
-  const remoteValue = ytext.toString();
-  if (localValue !== remoteValue) {
-    ytext.delete(0, ytext.length);
-    ytext.insert(0, localValue);
-    // ✅ El update se enviará automáticamente vía ydoc.on('update')
-  }
-  ignoreLocalEvent = false;
-});
-
-  // Cargar metadatos (nombre y permisos)
+  
+  // Cargar metadatos primero
   const resp = await fetch(`${API_URL}/files/${fileId}?userId=${currentUserId}`);
   if (!resp.ok) throw new Error('Archivo no encontrado');
   const full = await resp.json();
+  
   document.getElementById('editName').value = full.name || '';
-  applyPermissionToEditor(full.permission || 4);
+  const textarea = document.getElementById('editContent');
+  
+  // ✅ Inicializar textarea con contenido actual
+  textarea.value = full.content || ' ';
+  
+  // Crear documento Yjs
+  ydoc = new Y.Doc();
+  ytext = ydoc.getText('content');
+  
+  // ✅ Inicializar Yjs con el contenido actual
+  ytext.insert(0, full.content || ' ');
 
+  // 🔌 Configurar Socket.IO
+  socket.off('yjs-update'); // Limpiar listeners previos
+  
+  socket.on('yjs-update', ({ fileId: incomingFileId, update }) => {
+    if (incomingFileId === currentFileId && ydoc) {
+      ignoreLocalEvent = true;
+      Y.applyUpdate(ydoc, new Uint8Array(update));
+      ignoreLocalEvent = false;
+    }
+  });
+
+  // 📝 Observer para cambios remotos
+  ytextObserver = () => {
+    if (ignoreLocalEvent) return;
+    textarea.value = ytext.toString();
+  };
+  ytext.observe(ytextObserver);
+
+  // ⌨️ Listener para cambios locales
+  const handleInput = () => {
+    if (ignoreLocalEvent) return;
+    
+    ignoreLocalEvent = true;
+    const localValue = textarea.value;
+    const remoteValue = ytext.toString();
+    
+    if (localValue !== remoteValue) {
+      ytext.delete(0, ytext.length);
+      ytext.insert(0, localValue);
+    }
+    ignoreLocalEvent = false;
+  };
+  
+  textarea.removeEventListener('input', handleInput); // Evitar duplicados
+  textarea.addEventListener('input', handleInput);
+
+  // 📤 Enviar updates a otros clientes
+  ydoc.on('update', (update) => {
+    if (!ignoreLocalEvent) {
+      socket.emit('yjs-update', { 
+        fileId: currentFileId, 
+        update: Array.from(update) 
+      });
+    }
+  });
+
+  // 💾 Autosave cada 20 segundos
+  if (window.__autosaveInterval) clearInterval(window.__autosaveInterval);
+  window.__autosaveInterval = setInterval(() => {
+    persistFileToDB();
+  }, 20000);
+
+  applyPermissionToEditor(full.permission || 4);
   showModal('editModal');
 }
-
-async function closeAndUnlockEditModal() {
-  // Persistir en DB (opcional)
-  await persistFileToDB();
-
-  if (window.__autosaveInterval) {
-    clearInterval(window.__autosaveInterval);
-    window.__autosaveInterval = null;
-  }
-  // Dejar de observar y limpiar documento
-  if (ytext && window.__currentYjsObserver) ytext.unobserve(window.__currentYjsObserver);
-  if (ydoc) {
-    ydoc.destroy();
-    ydoc = null;
-    ytext = null;
-  }
-  currentFileId = null;
-  socket.off('yjs-update');
-  closeModal('editModal');
-}
-
 function applyPermissionToEditor(permiso) {
   const textarea = document.getElementById('editContent');
   textarea.readOnly = (permiso === 4); // ✅ solo lectura = 4
@@ -677,10 +662,37 @@ async function unlockFile(fileId) {
 }
 
 async function closeAndUnlockEditModal() {
-  if (currentFileId && currentUserId) {
-    await unlockFile(currentFileId);
-    currentFileId = null;
+  // Persistir en DB
+  await persistFileToDB();
+
+  // Limpiar autosave
+  if (window.__autosaveInterval) {
+    clearInterval(window.__autosaveInterval);
+    window.__autosaveInterval = null;
   }
+  
+  // Limpiar observer
+  if (ytext && ytextObserver) {
+    ytext.unobserve(ytextObserver);
+    ytextObserver = null;
+  }
+  
+  // Limpiar listeners de textarea
+  const textarea = document.getElementById('editContent');
+  const newTextarea = textarea.cloneNode(true);
+  textarea.parentNode.replaceChild(newTextarea, textarea);
+  
+  // Destruir documento Yjs
+  if (ydoc) {
+    ydoc.destroy();
+    ydoc = null;
+    ytext = null;
+  }
+  
+  // Limpiar socket listeners
+  socket.off('yjs-update');
+  
+  currentFileId = null;
   closeModal('editModal');
 }
 

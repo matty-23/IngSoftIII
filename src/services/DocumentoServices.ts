@@ -148,7 +148,18 @@ async saveCollaborativeContent(id: string, content: string, userId: string): Pro
     }
   }
 
-    const safeContent = content == null ? '' : String(content);
+  // ✅ Normalización robusta del contenido
+  let safeContent: string;
+  if (content == null) {
+    safeContent = ' ';
+  } else if (typeof content !== 'string') {
+    safeContent = String(content);
+  } else {
+    safeContent = content.trim().length === 0 ? ' ' : content;
+  }
+
+  console.log(`[DEBUG] saveCollaborativeContent - Guardando ${safeContent.length} caracteres`);
+
   // Actualizar contenido directamente (sin lock ni optimistic)
   fileDoc.content = safeContent;
   fileDoc.state = 'idle';
@@ -160,7 +171,7 @@ async saveCollaborativeContent(id: string, content: string, userId: string): Pro
     fileId: id.toString(),
     fileName: fileDoc.name,
     userId,
-    content,
+    safeContent,
     timestamp: new Date()
   });
 
