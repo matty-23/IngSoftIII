@@ -44,28 +44,34 @@ export class FileService {
     }
 
 
-    async updateContent(id: string, content: string, userId: string): Promise<Documento> {
-        const fileDoc = await FileModel.findById(id);
-        if (!fileDoc) throw new Error('Archivo no encontrado');
+async updateContent(id: string, content: string, userId: string): Promise<Documento> {
+    const fileDoc = await FileModel.findById(id);
+    if (!fileDoc) throw new Error('Archivo no encontrado');
 
-        // STATE PATTERN: Verificar si puede editar
-        const file = this.mapToEntity(fileDoc);
-        if (!file.canEdit()) {
-            throw new Error('El archivo no puede ser editado en su estado actual');
-        }
-
-        // EVENT-DRIVEN: Emitir evento de guardado
-        this.eventBus.emit('FileSaved', {
-            fileId: id.toString(),
-            fileName: fileDoc.name,
-            userId,
-            content,
-            timestamp: new Date()
-        } as FileSavedEvent);
-
-        const updated = await FileModel.findById(id);
-        return this.mapToEntity(updated!);
+    const file = this.mapToEntity(fileDoc);
+    if (!file.canEdit()) {
+        throw new Error('El archivo no puede ser editado en su estado actual');
     }
+
+    // Guardar los cambios
+    const updatedDoc = await FileModel.findByIdAndUpdate(
+        id,
+        { content, lastModifiedBy: userId, updatedAt: new Date() },
+        { new: true }
+    );
+
+    // Emitir evento
+    this.eventBus.emit('FileSaved', {
+        fileId: id.toString(),
+        fileName: updatedDoc!.name,
+        userId,
+        content,
+        timestamp: new Date()
+    } as FileSavedEvent);
+
+    return this.mapToEntity(updatedDoc!);
+}
+
 
     // DELETE
     async deleteFile(id: string, userId: string): Promise<void> {

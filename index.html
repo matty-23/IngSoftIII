@@ -520,47 +520,15 @@ async function openFile(file) {
   
   // Cargar metadatos primero
   const resp = await fetch(`${API_URL}/files/${fileId}?userId=${currentUserId}`);
-  // const permRes = await fetch(`${API_URL}/compartidos/permisos?fileId=${fileId}&userId=${currentUserId}`)
-  // .then(res => res.json())
-  // .then(data => console.log(data))
-  // .catch(err => console.error(err));
-// if (!permRes) {
-//   console.error('Error HTTP:', permRes.status, permRes.statusText);
-//   const err = await permRes.json().catch(() => ({}));
-//   throw new Error(err.error || 'Error desconocido');
-// }
-// const data = await permRes.json(); // ✅ ¡await + .json()!
-// console.log('Permiso recibido:', data);
-  const url = `${API_URL}/compartidos/permisos?fileId=${fileId}&userId=${currentUserId}`;
-
-  console.log('🔹 Iniciando fetch a:', url);
-
-  const permRes = await fetch(url);
-  
-  console.log('🔸 Estado HTTP:', permRes.status);
-  console.log('🔸 Headers:', Object.fromEntries(permRes.headers.entries()));
-  
-  // ⚠️ Verifica: ¿es JSON el Content-Type?
-  const contentType = permRes.headers.get('content-type');
-  console.log('🔸 Content-Type:', contentType);
-
-  if (!permRes.ok) {
-    console.error('❌ Respuesta no OK');
-    const text = await permRes.text(); // usa .text() para ver cuerpo crudo
-    console.log('❌ Cuerpo crudo (error):', text);
-    return;
+  const permRes = await fetch(`${API_URL}/files/permisos/${fileId}?userId=${currentUserId}`)
+  const permisso = await permRes.text();
+  if (!permisso) {
+    console.error('Error HTTP:', permRes.status, permRes.statusText);
+    const err = await permRes.json().catch(() => ({}));
+    throw new Error(err.error || 'Error desconocido');
   }
-
-  try {
-    // ✅ Esta es la forma correcta:
-    const data = await permRes.json();
-    console.log('✅ JSON parseado correctamente:', data);
-    return data;
-  } catch (e) {
-    console.error('💥 Error al parsear JSON:', e);
-    const text = await permRes.text();
-    console.log('💥 Cuerpo crudo (no JSON):', text);
-  }
+  const permisoDefinitivo = parseInt(permisso);
+  
   if (!resp) throw new Error('Archivo no encontrado');
   const full = await resp.json();
   
@@ -610,6 +578,7 @@ async function openFile(file) {
     ignoreLocalEvent = false;
   };
   
+  
   textarea.removeEventListener('input', handleInput); // Evitar duplicados
   textarea.addEventListener('input', handleInput);
 
@@ -622,16 +591,48 @@ async function openFile(file) {
       });
     }
   });
-  const permData = await permRes.json();
-  const permiso = permData || 4; // valor por defecto (solo lectura)
-  console.log(permRes);
-  applyPermissionToEditor(permData);
+  if (window._autosaveInterval) clearInterval(window._autosaveInterval);
+  window.__autosaveInterval = setInterval(() => {
+    persistFileToDB();
+  }, 20000);
+  console.log(permisoDefinitivo);
+  applyPermissionToEditor(permisoDefinitivo);
   showModal('editModal');
 }
 function applyPermissionToEditor(permiso) {
   const textarea = document.getElementById('editContent');
   textarea.readOnly = (permiso === 4); // ✅ solo lectura = 4
 }
+//  async function searchPermission(fileId,currentUserId){
+//   const url =`${API_URL}/files/permisos/${fileId}?userId=${currentUserId}`;
+//   console.log('🔹 Iniciando fetch a:', url);
+
+//   const permRes = await fetch(url);
+  
+//   console.log('🔸 Estado HTTP:', permRes.status);
+//   console.log('🔸 Headers:', Object.fromEntries(permRes.headers.entries()));
+  
+//   // ⚠️ Verifica: ¿es JSON el Content-Type?
+//   const contentType = permRes.headers.get('content-type');
+//   console.log('🔸 Content-Type:', contentType);
+
+//   if (!permRes.ok) {
+//     console.error('❌ Respuesta no OK');
+//     const text = await permRes.text(); // usa .text() para ver cuerpo crudo
+//     console.log('❌ Cuerpo crudo (error):', text);
+//     return;
+//   }
+
+//   try {
+//     // ✅ Esta es la forma correcta:
+//     const data = await permRes.json();
+//     console.log('✅ JSON parseado correctamente:', data);
+//     const permiso = data || 4; // valor por defecto (solo lectura)
+//     return permiso;
+//   } catch (e) {
+//     console.error('💥 Error al parsear JSON:', e);
+//   }
+// }
 async function persistFileToDB() {
   if (!currentFileId || !ydoc || !ytext) return;
 

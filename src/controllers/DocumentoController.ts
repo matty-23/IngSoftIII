@@ -2,6 +2,7 @@
 import { Router, Request, Response } from 'express';
 import { FileService } from '../services/DocumentoServices';
 import { VersionService } from '../services/VersionService';
+import { CompartirService } from '../services/CompartidosService';
 import { getIO } from '../socket';
 const router = Router();
 const fileService = new FileService();
@@ -160,5 +161,19 @@ router.put('/:id/persist', async (req: Request, res: Response) => {
     res.status(500).json({ error: error.message });
   }
 });
+router.get('/permisos/:fileId', async (req: Request, res: Response) => {
+  try {
+    const { fileId } = req.params;
+    const { userId } = req.query; 
+    const ref = await CompartirService.getPermission(String(fileId), String(userId));
+
+    return res.send(ref);
+  } catch (error: any) {
+    
+
+    return res.status(400);
+  }
+});
+
 
 export default router;

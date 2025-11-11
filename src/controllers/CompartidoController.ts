@@ -1,4 +1,3 @@
-// src/controllers/CompartidosController.ts
 import { Router, Request, Response } from 'express';
 import { CompartirService } from '../services/CompartidosService';
 
@@ -40,22 +39,6 @@ router.put('/permiso', async (req: Request, res: Response) => {
 });
 
 
-router.get('/permisos', async (req: Request, res: Response) => {
-  try {
-    const { fileId, userId } = req.query; // ✅ query, no params
-
-    // if (!fileId || !userId) {
-    //   return res.status(400).json({ error: "Faltan parámetros fileId o userId" });
-    // }
-    let ref = await CompartirService.getPermission(String(fileId), String(userId));
-    ref = 4;
-    return res.json({ debug: "¡Funciona!" });
-  } catch (error: any) {
-    
-    let ref = 4;
-    return res.json({ debug: "¡Funciona!" });
-  }
-});
 
 /** DELETE /api/compartidos */
 router.delete('/', async (req: Request, res: Response) => {

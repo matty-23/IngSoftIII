@@ -105,7 +105,7 @@ static async obtenerCompartidos(userId: string) {
         sharedWithId: userId
     }).select('permission').lean(); // solo traemos lo necesario
 
-    if (ref==null){return 8;}
+    if (ref==null){return 7;}
     // Si no existe → permiso 0 (sin acceso)
     return ref ? ref.permission : 0;
 }
