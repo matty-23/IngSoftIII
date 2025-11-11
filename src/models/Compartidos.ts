@@ -3,81 +3,69 @@ import { Componente } from '../interfaces/Componente';
 import { ISharedReference } from '../Infraestructura/database/Esquemas/ISharedReference';
 import { FolderModel } from '../Infraestructura/database/Esquemas/DirectorioEsquema';
 import { CompartirService  } from '../services/CompartidosService';
+import { FileModel } from '../Infraestructura/database/Esquemas/DocumentoEsquema';
 import { SharedReferenceModel } from '../Infraestructura/database/Esquemas/ISharedReference';
-import { permission } from 'process';
+import { permission, ref } from 'process';
+import { error } from 'console';
 
 export class Compartidos extends Directorio {
-    private references: ISharedReference[] = [];
-    
-    constructor(
-        id: string,
-        ownerId: string
-    ) {
-        // parentId = null porque "Compartidos" vive en la raíz del usuario
+    constructor(id: string, ownerId: string) {
         super(id, 'Compartidos', ownerId, null);
     }
-
-    async addReference(targetId: string, ref:ISharedReference): Promise<void> {
-        if (!this.references.some(ref => ref.targetId == targetId)) {
-            this.references.push(ref);}
-    }
-    getPermisoArchivo(targetId:string):string{
-        const nivelPermiso=this.references.filter(ref => ref.targetId === targetId);
-        if (!nivelPermiso){return '';}
-        switch(nivelPermiso[0].permission){
-            case 0: this.references = this.references.filter(ref => ref.targetId !== targetId);return '';
-            case 1: return 'x';
-            case 2: return 'w';
-            case 3: return 'wx';
-            case 4: return 'r';
-            case 5: return 'rx';
-            case 6: return 'rw';
-            case 7: return 'rwx';
-            default: return '';
-        }
-    }
-    changePermission(targetId:string,permiso:number):boolean{
-        const nivelPermiso=this.references.filter(ref => ref.targetId === targetId);
-        if (!nivelPermiso){return false;}
-        nivelPermiso[0].permission=permiso;
-        return true;
-    }
-    removeReference(targetId: string): void {
-        this.references = this.references.filter(ref => ref.targetId !== targetId);
+    async getReference(targetId: string): Promise<ISharedReference | null> {
+        return await SharedReferenceModel.findOne({
+            targetId,
+            sharedWithId: this.ownerId })
     }
 
-    getReferences(): ISharedReference[] {
-        return this.references;
+    async getPermisoArchivo(targetId: string): Promise<number> {
+        const ref = await this.getReference(targetId);
+        return ref?.permission ?? 0;
     }
 
-    // En "Compartidos" los children pueden generarse resolviendo los punteros
-    async getSubCarpetas(targetId?: string): Promise<Componente[]> {
-    if (targetId) {
-        const ref = this.references.find(r => r.targetId === targetId);
-        if (!ref) return [];
-
-        const doc = await FolderModel.findById(targetId);
-
-        if (!doc) return [];
-
-        // Convertimos el documento a una instancia lógica
-        const componente = new Directorio(
-            doc.id.toString(),
-            doc.name,
-            doc.ownerId,
-            doc.parentId ? doc.parentId.toString() : null
+    async changePermission(targetId: string, permiso: number): Promise<boolean> {
+        const result = await SharedReferenceModel.updateOne(
+            { targetId, sharedWithId: this.ownerId },
+            { $set: { permission: permiso } }
         );
-
-        // Ahora sí podés usar tus métodos
-        if (componente.getType() === 'folder') {
-            return componente.getChildren();
-        } else {
-            return [componente];
-        }
+        return result.modifiedCount > 0;
     }
 
-    return super.getChildren();
-}
+    async removeReference(targetId: string): Promise<boolean> {
+        const result = await SharedReferenceModel.deleteOne({
+            targetId,
+            sharedWithId: this.ownerId
+        });
+        return result.deletedCount > 0;
+    }
+
+    async getReferences(): Promise<ISharedReference[]> {
+        return await SharedReferenceModel.find({
+            sharedWithId: this.ownerId
+        })
+    }
+
+    async getSubCarpetas(targetId: string): Promise<Componente[]>{
+            // Primero: aseguramos que el usuario tiene acceso
+            const ref = await this.getReference(targetId);
+            if (!ref) return []; // 🔒 sin referencia → sin acceso
+
+            const doc = await FolderModel.findById(targetId);
+            if (!doc) return [];
+
+            // Luego creamos el componente — y puedes incluso cargar permisos:
+            const dir = new Directorio(
+                doc.id.toString(),
+                doc.name,
+                doc.ownerId,
+                doc.parentId?.toString() || null
+            );
+            // Opcional: inyectar permiso actual desde `ref.permission` al componente
+            return dir.getType() === 'folder' ? await dir.getChildren() : [dir];
+        
+        
+    }
+
     getTipo(): 'shared-folder' {
         return 'shared-folder';
     }

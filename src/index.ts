@@ -22,6 +22,7 @@ app.use(cors({
     /^http:\/\/10\.8\.72\.\d+:\d+$/ */
      /^http:\/\/localhost:\d+$/,        // localhost
     /^http:\/\/192\.168\.0\.\d+:\d+$/  // red local (192.168.0.x)
+ 
   ], 
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
@@ -67,33 +68,6 @@ async function start() {
             console.log(`📡 Servidor corriendo en http://localhost:${PORT}`);
             console.log(`🔗 WebSocket activo en ws://localhost:${PORT}`);
             console.log(`🔍 Health check: http://localhost:${PORT}/health`);
-            console.log('');
-            console.log('🔐 Autenticación:');
-            console.log('  POST   /api/auth/login           - Iniciar sesión');
-            console.log('  POST   /api/auth/register        - Registrar usuario');
-            console.log('  GET    /api/auth/me              - Usuario actual');
-            console.log('  GET    /api/auth/users           - Listar usuarios');
-            console.log('');
-            console.log('📁 Archivos:');
-            console.log('  POST   /api/files                - Crear archivo');
-            console.log('  GET    /api/files/:id            - Ver archivo');
-            console.log('  PUT    /api/files/:id            - Editar archivo');
-            console.log('  DELETE /api/files/:id            - Eliminar archivo');
-            console.log('  GET    /api/files/:id/versions   - Historial');
-            console.log('  POST   /api/files/:id/restore    - Restaurar versión');
-            console.log('');
-            console.log('📂 Carpetas:');
-            console.log('  POST   /api/folders              - Crear carpeta');
-            console.log('  GET    /api/folders              - Listar carpetas');
-            console.log('');
-            console.log('👥 Compartir:');
-            console.log('  POST   /api/compartidos/compartir - Compartir recurso');
-            console.log('  GET    /api/compartidos/:userId   - Ver compartidos');
-            console.log('  PUT    /api/compartidos/permiso   - Cambiar permisos');
-            console.log('  DELETE /api/compartidos           - Eliminar compartido');
-            console.log('');
-            console.log('📋 Auditoría:');
-            console.log('  GET    /api/audit                - Ver logs');
             console.log('='.repeat(60));
             console.log('');
         });

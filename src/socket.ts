@@ -1,4 +1,5 @@
 import { Server } from 'socket.io';
+import { FileModel } from './Infraestructura/database/Esquemas/DocumentoEsquema';
 //mport * as Y from 'yjs';
 
 let io: Server;
@@ -20,12 +21,12 @@ function getOrCreateDoc(docName: string): Y.Doc {
 export function initSocket(server: any) {
   io = new Server(server, {
     cors: {
-      origin: [/* 
+      origin: [
         /^http:\/\/localhost:\d+$/,
-        /^http:\/\/10\.8\.72\.\d+:\d+$/ */
-        /^http:\/\/localhost:\d+$/,
-        /^http:\/\/192\.168\.0\.\d+:\d+$/
-      ],
+        /^http:\/\/192\.168\.0\.\d+:\d+$/ 
+        // /^http:\/\/localhost:\d+$/,
+        // /^http:\/\/10\.8\.74\.\d+:\d+$/
+      ], 
       methods: ["GET", "POST"],
       credentials: true
     }
@@ -41,6 +42,26 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log(`🔴 Usuario desconectado: ${socket.id}`);
+  });
+});
+
+// src/socket.ts o donde manejes los eventos
+io.on('connection', (socket) => {
+  socket.on('file:join', ({ fileId, userId }) => {
+    socket.join(`file_${fileId}`);
+    // Opcional: actualizar editingUsers en DB
+  });
+
+  socket.on('file:leave', async ({ fileId, userId }) => {
+    socket.leave(`file_${fileId}`);
+
+    // Opcional: quitar de editingUsers en DB (si lo usas)
+    await FileModel.findByIdAndUpdate(fileId, {
+      $pull: { editingUsers: userId }
+    });
+
+    // Notificar a otros en la sala
+    socket.to(`file_${fileId}`).emit('user:left', { userId });
   });
 });
 

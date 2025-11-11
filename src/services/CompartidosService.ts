@@ -12,36 +12,56 @@ export class CompartirService {
     permiso: number) {
     const destinatario = await UsuarioModel.findOne({ email: destinatarioEmail });
     if (!destinatario) throw new Error('Usuario destinatario no encontrado');
-    console.log("📦 Destinatario carpetaCompartido:", destinatario.carpetaCompartidoId);
     let recurso = await FolderModel.findById(targetId);
   console.log("📂 Resultado FolderModel:", recurso ? "✅ encontrado" : "❌ no encontrado");
   if (!recurso) {
     recurso = await FileModel.findById(targetId); // 🔥 se agrega búsqueda en archivos
   }
     if (!recurso) throw new Error('Recurso no encontrado');
-    console.log("Primera prueba transcurrida");
-    //if (recurso.ownerId !== ownerId) throw new Error('No tienes permiso para compartir este recurso');
-  
-    const ref = await SharedReferenceModel.create({
-      targetId,
-      ownerId,
-      sharedWithId: destinatario.id,
-      permission: permiso,
-    });
+    
+    if (recurso.ownerId !== ownerId) throw new Error('No tienes permiso para compartir este recurso');
 
     const comp = await FolderModel.findById(destinatario.carpetaCompartidoId);
     if (!comp) throw new Error('El destinatario no tiene carpeta de compartidos');
 
-    // Crear la instancia lógica de la carpeta Compartidos
-    const compartido = new Compartidos(
-      comp.id.toString(),
-      destinatario.id.toString()
+   const ref = await SharedReferenceModel.findOneAndUpdate(
+        {
+            targetId,
+            sharedWithId: destinatario._id,
+        },
+        {
+            $set: {
+                ownerId,
+                permission: permiso,
+                updatedAt: new Date(),
+            }
+        },
+        {
+            upsert: true,
+            new: true, // retorna el documento modificado/creado
+            setDefaultsOnInsert: true,
+            runValidators: true
+        }
     );
-    await compartido.addReference(targetId, ref);
     return ref;
   }
 
-  /** 📋 Obtener los recursos compartidos de un usuario */
+  static async dejarDeCompartirRecurso(
+    ownerId: string,
+    targetId: string,
+    destinatarioEmail: string
+): Promise<boolean> {
+    const destinatario = await UsuarioModel.findOne({ email: destinatarioEmail });
+    if (!destinatario) return false;
+
+    const result = await SharedReferenceModel.deleteOne({
+        targetId,
+        ownerId, // opcional: asegurar que solo el dueño puede revocar
+        sharedWithId: destinatario._id
+    });
+
+    return result.deletedCount > 0;
+}
 /** 📋 Obtener los recursos compartidos de un usuario */
 static async obtenerCompartidos(userId: string) {
   const refs = await SharedReferenceModel.find({ sharedWithId: userId });
@@ -79,8 +99,17 @@ static async obtenerCompartidos(userId: string) {
     await ref.save();
     return ref;
   }
+    static async getPermission(fileId: string, userId: string): Promise<number> {
+    const ref = await SharedReferenceModel.findOne({
+        targetId: fileId,
+        sharedWithId: userId
+    }).select('permission').lean(); // solo traemos lo necesario
 
-  /** ❌ Dejar de compartir un recurso */
+    if (ref==null){return 8;}
+    // Si no existe → permiso 0 (sin acceso)
+    return ref ? ref.permission : 0;
+}
+ 
   static async eliminarCompartido(targetId: string, sharedWithId: string) {
     await SharedReferenceModel.deleteOne({ targetId, sharedWithId });
     return { message: 'Recurso eliminado de compartidos' };

@@ -258,8 +258,11 @@
 
 <script>
 /* ================== CONFIG ================== */
-const API_URL = 'http://192.168.0.11:3000/api';
-const socket = io('http://192.168.0.11:3000');
+const API_URL = 'http://192.168.0.106:3000/api';
+const socket = io('http://192.168.0.106:3000');
+// const API_URL = 'http://10.8.74.222:3000/api';
+// const socket = io('http://10.8.74.222:3000');
+
 
 /* ================== ESTADO GLOBAL ================== */
 let currentUser = null;
@@ -508,7 +511,8 @@ let ytextObserver = null;
 async function openFile(file) {
   const fileId = file?._id || file?.id || file?.targetId;
   if (!fileId) return alert('Archivo sin ID.');
-
+  
+  socket.emit('file:join', { fileId, userId: currentUserId });
   // Cerrar documento anterior
   if (ydoc) await closeAndUnlockEditModal();
 
@@ -516,7 +520,48 @@ async function openFile(file) {
   
   // Cargar metadatos primero
   const resp = await fetch(`${API_URL}/files/${fileId}?userId=${currentUserId}`);
-  if (!resp.ok) throw new Error('Archivo no encontrado');
+  // const permRes = await fetch(`${API_URL}/compartidos/permisos?fileId=${fileId}&userId=${currentUserId}`)
+  // .then(res => res.json())
+  // .then(data => console.log(data))
+  // .catch(err => console.error(err));
+// if (!permRes) {
+//   console.error('Error HTTP:', permRes.status, permRes.statusText);
+//   const err = await permRes.json().catch(() => ({}));
+//   throw new Error(err.error || 'Error desconocido');
+// }
+// const data = await permRes.json(); // ✅ ¡await + .json()!
+// console.log('Permiso recibido:', data);
+  const url = `${API_URL}/compartidos/permisos?fileId=${fileId}&userId=${currentUserId}`;
+
+  console.log('🔹 Iniciando fetch a:', url);
+
+  const permRes = await fetch(url);
+  
+  console.log('🔸 Estado HTTP:', permRes.status);
+  console.log('🔸 Headers:', Object.fromEntries(permRes.headers.entries()));
+  
+  // ⚠️ Verifica: ¿es JSON el Content-Type?
+  const contentType = permRes.headers.get('content-type');
+  console.log('🔸 Content-Type:', contentType);
+
+  if (!permRes.ok) {
+    console.error('❌ Respuesta no OK');
+    const text = await permRes.text(); // usa .text() para ver cuerpo crudo
+    console.log('❌ Cuerpo crudo (error):', text);
+    return;
+  }
+
+  try {
+    // ✅ Esta es la forma correcta:
+    const data = await permRes.json();
+    console.log('✅ JSON parseado correctamente:', data);
+    return data;
+  } catch (e) {
+    console.error('💥 Error al parsear JSON:', e);
+    const text = await permRes.text();
+    console.log('💥 Cuerpo crudo (no JSON):', text);
+  }
+  if (!resp) throw new Error('Archivo no encontrado');
   const full = await resp.json();
   
   document.getElementById('editName').value = full.name || '';
@@ -577,14 +622,10 @@ async function openFile(file) {
       });
     }
   });
-
-  // 💾 Autosave cada 20 segundos
-  if (window.__autosaveInterval) clearInterval(window.__autosaveInterval);
-  window.__autosaveInterval = setInterval(() => {
-    persistFileToDB();
-  }, 20000);
-
-  applyPermissionToEditor(full.permission || 4);
+  const permData = await permRes.json();
+  const permiso = permData || 4; // valor por defecto (solo lectura)
+  console.log(permRes);
+  applyPermissionToEditor(permData);
   showModal('editModal');
 }
 function applyPermissionToEditor(permiso) {
@@ -651,14 +692,12 @@ async function saveFile() {
 
 /* ================== UNLOCK / CERRAR MODAL ================== */
 async function unlockFile(fileId) {
-  try {
-    await fetch(`${API_URL}/files/${fileId}/unlock`, {
-      method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ userId: currentUserId })
-    });
-    socket.emit('fileUnlockRequested', { fileId });
-  } catch (err) {
-    console.warn('unlockFile error:', err);
-  }
+  if (!fileId || !currentUserId) return;
+  
+  socket.emit('file:leave', { 
+    fileId, 
+    userId: currentUserId 
+  });
 }
 
 async function closeAndUnlockEditModal() {

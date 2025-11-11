@@ -43,7 +43,7 @@ export class FileService {
         return this.mapToEntity(fileDoc);
     }
 
-    // UPDATE (con optimistic locking)
+
     async updateContent(id: string, content: string, userId: string): Promise<Documento> {
         const fileDoc = await FileModel.findById(id);
         if (!fileDoc) throw new Error('Archivo no encontrado');
@@ -52,20 +52,6 @@ export class FileService {
         const file = this.mapToEntity(fileDoc);
         if (!file.canEdit()) {
             throw new Error('El archivo no puede ser editado en su estado actual');
-        }
-
-        // OPTIMISTIC LOCKING
-        const currentVersion = fileDoc.version;
-        const result = await FileModel.updateOne(
-            { _id: id, version: currentVersion },
-            {
-                $set: { content, state: 'idle' },
-                $inc: { version: 1 }
-            }
-        );
-
-        if (result.modifiedCount === 0) {
-            throw new Error('Conflicto de concurrencia: el archivo fue modificado por otro usuario');
         }
 
         // EVENT-DRIVEN: Emitir evento de guardado

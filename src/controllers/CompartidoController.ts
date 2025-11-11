@@ -10,6 +10,7 @@ router.post('/compartir', async (req: Request, res: Response) => {
     const { ownerId, targetId, destinatarioEmail, permiso } = req.body;
     console.log("📤 Enviando datos a /compartidos/compartir:", { ownerId, targetId, destinatarioEmail, permiso });
     const ref = await CompartirService.compartirRecurso(ownerId, targetId, destinatarioEmail, permiso);
+    
     res.status(201).json({ message: 'Recurso compartido exitosamente', ref });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -35,6 +36,24 @@ router.put('/permiso', async (req: Request, res: Response) => {
     res.json({ message: 'Permiso actualizado', ref });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+
+router.get('/permisos', async (req: Request, res: Response) => {
+  try {
+    const { fileId, userId } = req.query; // ✅ query, no params
+
+    // if (!fileId || !userId) {
+    //   return res.status(400).json({ error: "Faltan parámetros fileId o userId" });
+    // }
+    let ref = await CompartirService.getPermission(String(fileId), String(userId));
+    ref = 4;
+    return res.json({ debug: "¡Funciona!" });
+  } catch (error: any) {
+    
+    let ref = 4;
+    return res.json({ debug: "¡Funciona!" });
   }
 });
 
