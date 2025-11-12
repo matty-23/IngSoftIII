@@ -484,7 +484,7 @@ function renderFiles(items, modo = 'normal') {
   });
 }
 
-/* ================== ✅ APERTURA / SINCRO TIEMPO REAL ================== */
+/* ================== ✅ APERTURA / SINCRO TIEMPO REAL - CORREGIDO ================== */
 async function openFile(file) {
   const fileId = file?._id || file?.id || file?.targetId;
   if (!fileId) return alert('Archivo sin ID.');
@@ -492,7 +492,7 @@ async function openFile(file) {
   if (ydoc) await closeAndUnlockEditModal();
   currentFileId = fileId;
   let textarea = document.getElementById('editContent');
-  //textarea.value = 'Cargando...';
+  textarea.value = 'Cargando...';
 
   // 1️⃣ Crear documento Yjs local
   ydoc = new Y.Doc();
@@ -504,28 +504,26 @@ async function openFile(file) {
   // 3️⃣ ✅ Esperar estado inicial del servidor
   socket.once('file:init-state', async ({ fileId: incomingFileId, state }) => {
     if (incomingFileId !== currentFileId || !ydoc) return;
-    console.log("🧾 Contenido recibido desde Yjs:", ytext.toString());
 
+    // ✅ APLICAR UPDATE PRIMERO
     ignoreLocalEvent = true;
     Y.applyUpdate(ydoc, new Uint8Array(state));
-    textarea.value = ytext.toString();
+    
+    // ✅ AHORA SÍ LOG Y ACTUALIZAR TEXTAREA
+    const content = ytext.toString();
+    console.log("🧾 Contenido recibido desde Yjs:", content.length, "caracteres");
+    textarea.value = content;
     ignoreLocalEvent = false;
 
-    // 5️⃣ Cargar metadatos (nombre)
+    // 4️⃣ Cargar metadatos (nombre)
     const metaRes = await fetch(`${API_URL}/files/${fileId}?userId=${currentUserId}`);
     const meta = await metaRes.json();
     document.getElementById('editName').value = meta.name || '';
 
-    // 4️⃣ Cargar permisos (después de tener contenido)
+    // 5️⃣ Cargar permisos
     const permRes = await fetch(`${API_URL}/files/permisos/${fileId}?userId=${currentUserId}`);
     const permisoDefinitivo = parseInt(await permRes.text()) || 4;
     applyPermissionToEditor(permisoDefinitivo);
-
-    if (ytext && ytext.toString().trim() === '') {
-  ytext.insert(0, meta.content || '');
-  textarea.value = meta.content || '';
-  console.log("✅ Contenido cargado desde API:", meta.content);
-}
   });
 
   // 6️⃣ Escuchar updates remotos
@@ -533,6 +531,7 @@ async function openFile(file) {
     if (fid === currentFileId && ydoc) {
       ignoreLocalEvent = true;
       Y.applyUpdate(ydoc, new Uint8Array(update));
+      // ✅ Actualizar textarea después de aplicar update
       textarea.value = ytext.toString();
       ignoreLocalEvent = false;
     }
@@ -562,6 +561,7 @@ async function openFile(file) {
   const newTextarea = textarea.cloneNode(true);
   newTextarea.addEventListener('input', handleInput);
   textarea.parentNode.replaceChild(newTextarea, textarea);
+  textarea = newTextarea; // ✅ Actualizar referencia
 
   // 9️⃣ Enviar updates locales
   const ydocUpdateHandler = (update) => {
@@ -571,12 +571,7 @@ async function openFile(file) {
   };
   ydoc.on('update', ydocUpdateHandler);
 
-  // 🔟 Autosave
-  // if (window.__autosaveInterval) clearInterval(window.__autosaveInterval);
-  // window.__autosaveInterval = setInterval(() => persistFileToDB(), 20000);
-
-
-  // Guardar para limpieza
+  // 🔟 Guardar para limpieza
   window.__cleanupYjs = () => {
     ytext.unobserve(ytextObserver);
     ydoc.off('update', ydocUpdateHandler);
@@ -584,7 +579,7 @@ async function openFile(file) {
     ydoc.destroy();
     ydoc = null; ytext = null;
   };
-  //await persistFileToDB();
+
   showModal('editModal');
 }
 
@@ -600,10 +595,8 @@ async function persistFileToDB() {
   if (!currentFileId || !ydoc || !ytext) return;
 
   try {
-    // Convertir el documento Yjs a texto plano
     const content = ytext.toString();
 
-    // Enviar a tu API (PUT /files/:id)
     const res = await fetch(`${API_URL}/files/${currentFileId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
