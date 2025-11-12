@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ArchivosYa — Combinado (WebSocket + Compartir)</title>
+  <title>ArchivosYa — Colaborativo con Autosave</title>
   <style>
     /* ---------- RESET / BASE ---------- */
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -65,7 +65,10 @@
     .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:2000; align-items:center; justify-content:center; padding:20px; }
     .modal.active { display:flex; }
     .modal-content { width:100%; max-width:720px; background:#fff; border-radius:12px; padding:20px; box-shadow:0 14px 40px rgba(0,0,0,.25); }
-    .modal-header { font-size:18px; font-weight:700; margin-bottom:12px; }
+    .modal-header { font-size:18px; font-weight:700; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; }
+    .autosave-indicator { font-size:12px; color:#5f6368; font-weight:400; }
+    .autosave-indicator.saving { color:#1967d2; }
+    .autosave-indicator.saved { color:#2e7d32; }
     .modal-actions { display:flex; justify-content:flex-end; gap:12px; margin-top:12px; }
     .btn { padding:8px 14px; border-radius:8px; border:none; cursor:pointer; font-weight:600; }
     .btn-primary { background:#1967d2; color:#fff; }
@@ -74,7 +77,6 @@
     .spinner { width:40px;height:40px;border:4px solid #f1f3f4;border-top:4px solid #1967d2;border-radius:50%; animation:spin 1s linear infinite;margin:0 auto 12px; }
     @keyframes spin { to { transform:rotate(360deg); } }
     .empty-state { text-align:center; padding:60px 20px; color:#5f6368; }
-    /* small helpers */
     .hidden { display:none; }
     .flex { display:flex; align-items:center; justify-content:center; }
   </style>
@@ -90,7 +92,7 @@
     <div class="login-box">
       <div class="login-logo">AY</div>
       <div class="login-title">ArchivosYa</div>
-      <div class="login-subtitle">Tu sistema de gestión de archivos</div>
+      <div class="login-subtitle">Tu sistema de gestión de archivos colaborativo</div>
       <div class="login-tabs">
         <div class="login-tab active" id="tabLogin" onclick="switchTab('login')">Iniciar Sesión</div>
         <div class="login-tab" id="tabRegister" onclick="switchTab('register')">Registrarse</div>
@@ -185,18 +187,15 @@
   <!-- Modal: Editar -->
   <div id="editModal" class="modal" aria-hidden="true">
     <div class="modal-content">
-      <div class="modal-header">Editar archivo</div>
-      <div class="form-group">
-        <label>Nombre</label>
-        <input id="editName" type="text" readonly />
+      <div class="modal-header">
+        <div>
+          <span id="editName">Editar archivo</span>
+          <div id="autosaveIndicator" class="autosave-indicator">💾 Se guarda automáticamente</div>
+        </div>
+        <button class="btn btn-secondary" style="margin:0;" onclick="closeAndUnlockEditModal()">✕ Cerrar</button>
       </div>
       <div class="form-group">
-        <label>Contenido</label>
-        <textarea id="editContent" rows="12" style="width:100%; padding:10px; border:1px solid #dadce0; border-radius:6px; font-family:monospace;"></textarea>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="closeAndUnlockEditModal()">Cancelar</button>
-        <button id="saveFileBtn" class="btn btn-primary" onclick="saveFile()">Guardar</button>
+        <textarea id="editContent" rows="18" style="width:100%; padding:10px; border:1px solid #dadce0; border-radius:6px; font-family:monospace; font-size:13px;"></textarea>
       </div>
     </div>
   </div>
@@ -251,6 +250,15 @@ socket.on('fileUnlocked', ({ fileId }) => {
     card.classList.remove('locked');
     card.title = '';
   }
+});
+
+socket.on('user:joined', ({ userId }) => {
+  console.log(`👤 ${userId} se unió al archivo`);
+  updateAutosaveIndicator('Otro usuario editando...');
+});
+
+socket.on('user:left', ({ userId }) => {
+  console.log(`👋 ${userId} salió del archivo`);
 });
 
 /* ================== INICIALIZACIÓN / SESIÓN ================== */
@@ -412,6 +420,15 @@ function hideEmptyState() {
   document.getElementById('filesContainer').classList.remove('hidden'); 
 }
 
+function updateAutosaveIndicator(text) {
+  const indicator = document.getElementById('autosaveIndicator');
+  if (!indicator) return;
+  indicator.textContent = text;
+  indicator.className = 'autosave-indicator';
+  if (text.includes('Guardando')) indicator.classList.add('saving');
+  if (text.includes('Guardado')) indicator.classList.add('saved');
+}
+
 /* ================== RENDER & INTERACCIÓN DE ARCHIVOS ================== */
 async function loadFiles(folderId = null) {
   if (!currentUser) return;
@@ -484,163 +501,113 @@ function renderFiles(items, modo = 'normal') {
   });
 }
 
-/* ================== ✅ APERTURA / SINCRO TIEMPO REAL - CORREGIDO ================== */
+/* ================== ✅ APERTURA / SINCRO TIEMPO REAL ================== */
 async function openFile(file) {
   const fileId = file?._id || file?.id || file?.targetId;
   if (!fileId) return alert('Archivo sin ID.');
 
   if (ydoc) await closeAndUnlockEditModal();
   currentFileId = fileId;
-  let textarea = document.getElementById('editContent');
+  const textarea = document.getElementById('editContent');
   textarea.value = 'Cargando...';
+  updateAutosaveIndicator('Conectando...');
 
   // 1️⃣ Crear documento Yjs local
   ydoc = new Y.Doc();
-  ytext = ydoc.getText('content');
+  let ytext = ydoc.getText('content'); // ✅ Inicializar inmediatamente
 
   // 2️⃣ Unirse al archivo
   socket.emit('file:join', { fileId, userId: currentUserId });
 
-  // 3️⃣ ✅ Esperar estado inicial del servidor
+  // 3️⃣ Esperar estado inicial
   socket.once('file:init-state', async ({ fileId: incomingFileId, state }) => {
     if (incomingFileId !== currentFileId || !ydoc) return;
-
-    // ✅ APLICAR UPDATE PRIMERO
-    ignoreLocalEvent = true;
-    Y.applyUpdate(ydoc, new Uint8Array(state));
     
-    // ✅ AHORA SÍ LOG Y ACTUALIZAR TEXTAREA
-    const content = ytext.toString();
-    console.log("🧾 Contenido recibido desde Yjs:", content.length, "caracteres");
-    textarea.value = content;
-    ignoreLocalEvent = false;
-
-    // 4️⃣ Cargar metadatos (nombre)
+    // Aplicar estado inicial SIN bloquear eventos
+    Y.applyUpdate(ydoc, new Uint8Array(state));
+    textarea.value = ytext.toString(); // ✅ Actualizar UI
+    
+    updateAutosaveIndicator('💾 Se guarda automáticamente');
+    
+    // Cargar metadatos (igual que antes)
     const metaRes = await fetch(`${API_URL}/files/${fileId}?userId=${currentUserId}`);
     const meta = await metaRes.json();
-    document.getElementById('editName').value = meta.name || '';
-
-    // 5️⃣ Cargar permisos
+    document.getElementById('editName').textContent = meta.name || 'Sin nombre';
+    
     const permRes = await fetch(`${API_URL}/files/permisos/${fileId}?userId=${currentUserId}`);
     const permisoDefinitivo = parseInt(await permRes.text()) || 4;
     applyPermissionToEditor(permisoDefinitivo);
   });
 
-  // 6️⃣ Escuchar updates remotos
-  socket.on('yjs-update', ({ fileId: fid, update }) => {
-    if (fid === currentFileId && ydoc) {
-      ignoreLocalEvent = true;
-      Y.applyUpdate(ydoc, new Uint8Array(update));
-      // ✅ Actualizar textarea después de aplicar update
-      textarea.value = ytext.toString();
-      ignoreLocalEvent = false;
+  // 4️⃣ ✅ CORRECTO: Observar cambios en Y.Text
+  const observer = (event) => {
+    // Solo enviar si NO es un cambio local (evita loops)
+    if (event.transaction.origin !== 'user-input') {
+      const update = Y.encodeStateAsUpdate(ydoc);
+      socket.emit('yjs-update', { 
+        fileId: currentFileId, 
+        update: Array.from(update) 
+      });
     }
-  });
-
-  // 7️⃣ Observer: Yjs → textarea
-  const ytextObserver = () => {
-    if (ignoreLocalEvent) return;
+    // Siempre actualizar el textarea
     textarea.value = ytext.toString();
   };
-  ytext.observe(ytextObserver);
+  ytext.observe(observer);
 
-  // 8️⃣ Listener: textarea → Yjs
+  // 5️⃣ Sincronizar textarea → Yjs
+  let lastContent = textarea.value;
   const handleInput = () => {
-    if (ignoreLocalEvent) return;
-    ignoreLocalEvent = true;
-    const local = textarea.value;
-    const remote = ytext.toString();
-    if (local !== remote) {
+    const newContent = textarea.value;
+    if (newContent === lastContent) return;
+    
+    lastContent = newContent;
+    
+    // Aplicar cambios a Yjs (marcar como 'user-input' para evitar enviar al servidor)
+    ydoc.transact(() => {
       ytext.delete(0, ytext.length);
-      ytext.insert(0, local);
-    }
-    ignoreLocalEvent = false;
+      ytext.insert(0, newContent);
+    }, 'user-input'); // 👈 ¡CLAVE! Marcar como origen local
+    
+    updateAutosaveIndicator('⏳ Guardando...');
   };
+  textarea.addEventListener('input', handleInput);
 
-  // Limpiar y reconectar
-  const newTextarea = textarea.cloneNode(true);
-  newTextarea.addEventListener('input', handleInput);
-  textarea.parentNode.replaceChild(newTextarea, textarea);
-  textarea = newTextarea; // ✅ Actualizar referencia
-
-  // 9️⃣ Enviar updates locales
-  const ydocUpdateHandler = (update) => {
-    if (!ignoreLocalEvent) {
-      socket.emit('yjs-update', { fileId: currentFileId, update: Array.from(update) });
-    }
+  // 6️⃣ Recibir updates remotos
+  const handleRemoteUpdate = ({ fileId: fid, update }) => {
+    if (fid !== currentFileId || !ydoc) return;
+    
+    Y.applyUpdate(ydoc, new Uint8Array(update));
+    textarea.value = ytext.toString();
+    
+    updateAutosaveIndicator('✅ Sincronizado');
+    setTimeout(() => updateAutosaveIndicator('💾 Se guarda automáticamente'), 1500);
   };
-  ydoc.on('update', ydocUpdateHandler);
+  socket.on('yjs-update', handleRemoteUpdate);
 
-  // 🔟 Guardar para limpieza
+  // 7️⃣ Limpieza
   window.__cleanupYjs = () => {
-    ytext.unobserve(ytextObserver);
-    ydoc.off('update', ydocUpdateHandler);
-    socket.off('yjs-update');
+    socket.off('yjs-update', handleRemoteUpdate);
+    ytext.unobserve(observer);
+    textarea.removeEventListener('input', handleInput);
     ydoc.destroy();
-    ydoc = null; ytext = null;
+    ydoc = null;
   };
 
   showModal('editModal');
 }
-
 
 function applyPermissionToEditor(permiso) {
   const textarea = document.getElementById('editContent');
   const isReadOnly = (permiso === 4);
   textarea.readOnly = isReadOnly;
   textarea.style.backgroundColor = isReadOnly ? '#f8f9fa' : '#fff';
-}
-
-async function persistFileToDB() {
-  if (!currentFileId || !ydoc || !ytext) return;
-
-  try {
-    const content = ytext.toString();
-
-    const res = await fetch(`${API_URL}/files/${currentFileId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, userId: currentUserId })
-    });
-
-    if (!res.ok) {
-      console.warn(`⚠️ Error al guardar ${currentFileId}: ${res.status}`);
-    } else {
-      console.log(`💾 Archivo ${currentFileId} persistido correctamente`);
-    }
-  } catch (err) {
-    console.error('❌ persistFileToDB error:', err);
-  }
-}
-
-/* Guardar explícito */
-async function saveFile() {
-  if (!currentFileId || !ytext) return alert('No hay archivo abierto.');
-  const saveBtn = document.getElementById('saveFileBtn');
-  saveBtn.disabled = true; saveBtn.textContent = 'Guardando...';
-  try {
-    await persistFileToDB();
-    alert('✅ Archivo guardado');
-    await closeAndUnlockEditModal();
-    await loadFiles(currentFolderId);
-  } catch (err) {
-    console.error('Error saveFile:', err);
-    alert('No se pudo guardar (revisa consola)');
-  } finally {
-    saveBtn.disabled = false;
-    saveBtn.textContent = 'Guardar';
+  if (isReadOnly) {
+    updateAutosaveIndicator('🔒 Solo lectura');
   }
 }
 
 /* ================== CERRADO SEGURO ================== */
 async function closeAndUnlockEditModal() {
-  await persistFileToDB();
-
-  if (window.__autosaveInterval) {
-    clearInterval(window.__autosaveInterval);
-    window.__autosaveInterval = null;
-  }
-
   if (currentFileId && currentUserId) {
     socket.emit('file:leave', { fileId: currentFileId, userId: currentUserId });
   }
@@ -759,7 +726,7 @@ function showProfile() {
 
 function escapeHtml(s) {
   if (s === undefined || s === null) return '';
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'<','>':'>','"':'&quot;',"'":"&#39;"}[c]));
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c]));
 }
 
 window.addEventListener('beforeunload', (e) => {

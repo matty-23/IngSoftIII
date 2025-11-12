@@ -79,7 +79,7 @@ router.put('/:id', async (req: Request, res: Response) => {
         if (error.message.includes('Conflicto de concurrencia')) {
             return res.status(409).json({ error: error.message });
         }
-        res.status(500).json({ error: error.message });2
+        res.status(500).json({ error: error.message });
     }
 });
 
