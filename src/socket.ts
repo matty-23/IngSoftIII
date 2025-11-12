@@ -1,71 +1,93 @@
+// src/socket.ts
 import { Server } from 'socket.io';
+import * as Y from 'yjs';
 import { FileModel } from './Infraestructura/database/Esquemas/DocumentoEsquema';
-//mport * as Y from 'yjs';
 
 let io: Server;
-/*
-// Mapa de documentos Yjs por nombre (ej: "archivo-123")
-const docs = new Map<string, Y.Doc>();
+const yjsDocs = new Map<string, Y.Doc>(); // ✅ Documentos activos por fileId
 
-function getOrCreateDoc(docName: string): Y.Doc {
-  if (!docs.has(docName)) {
+async function getYDoc(fileId: string): Promise<Y.Doc> {
+  if (!yjsDocs.has(fileId)) {
     const doc = new Y.Doc();
-    docs.set(docName, doc);
-    
-    // Opcional: guardar en DB cuando cambie (throttle para rendimiento)
-    // doc.on('update', (update: Uint8Array) => { ... });
+
+    try {
+      const file = await FileModel.findById(fileId);
+      if (file?.content !== undefined) {
+        doc.getText('content').insert(0, file.content);
+        console.log(`📄 [${fileId}] Cargado desde DB (${file.content.length} caracteres)`);
+      } else {
+        console.warn(`⚠️ [${fileId}] No se encontró contenido en la base`);
+      }
+    } catch (err) {
+      console.error(`❌ Error cargando ${fileId}:`, err);
+    }
+
+    yjsDocs.set(fileId, doc);
   }
-  return docs.get(docName)!;
-}*/
+
+  return yjsDocs.get(fileId)!;
+}
 
 export function initSocket(server: any) {
   io = new Server(server, {
     cors: {
-      origin: [
-        /^http:\/\/localhost:\d+$/,
-        /^http:\/\/192\.168\.0\.\d+:\d+$/ 
-        // /^http:\/\/localhost:\d+$/,
-        // /^http:\/\/10\.8\.74\.\d+:\d+$/
-      ], 
+      origin: [/^http:\/\/localhost:\d+$/, /^http:\/\/192\.168\.0\.\d+:\d+$/],
       methods: ["GET", "POST"],
       credentials: true
     }
   });
 
-io.on('connection', (socket) => {
-  console.log(`🟢 Usuario conectado: ${socket.id}`);
+  io.on('connection', (socket) => {
+    console.log(`🟢 ${socket.id} conectado`);
 
-  socket.on("yjs-update", ({ fileId, update }) => {
-    // Reenvía la actualización a todos los demás clientes
-    socket.broadcast.emit("yjs-update", { fileId, update });
-  });
+    // ✅ file:join — enviar estado inicial
+    socket.on('file:join', async ({ fileId, userId }) => {
+      socket.join(`file_${fileId}`);
 
-  socket.on('disconnect', () => {
-    console.log(`🔴 Usuario desconectado: ${socket.id}`);
-  });
-});
-
-// src/socket.ts o donde manejes los eventos
-io.on('connection', (socket) => {
-  socket.on('file:join', ({ fileId, userId }) => {
-    socket.join(`file_${fileId}`);
-    // Opcional: actualizar editingUsers en DB
-  });
-
-  socket.on('file:leave', async ({ fileId, userId }) => {
-    socket.leave(`file_${fileId}`);
-
-    // Opcional: quitar de editingUsers en DB (si lo usas)
-    await FileModel.findByIdAndUpdate(fileId, {
-      $pull: { editingUsers: userId }
+      const ydoc = await getYDoc(fileId); // 👈 Ahora sí esperamos
+      const state = Y.encodeStateAsUpdate(ydoc);
+      socket.emit('file:init-state', { fileId, state: Array.from(state) });
+      console.log(`📤 Estado inicial enviado (${ydoc.getText('content').length} caracteres)`);
     });
 
-    // Notificar a otros en la sala
-    socket.to(`file_${fileId}`).emit('user:left', { userId });
-  });
-});
 
+    // ✅ yjs-update — aplicar en servidor y retransmitir
+    socket.on('yjs-update', async ({ fileId, update }) => {
+      try {
+        const ydoc = await getYDoc(fileId);
+        Y.applyUpdate(ydoc, new Uint8Array(update)); // ✅ Aplicar update central
+        socket.to(`file_${fileId}`).emit('yjs-update', { fileId, update });
+      } catch (err) {
+        console.error(`❌ Error aplicando update ${fileId}:`, err);
+      }
+    });
+
+    // ✅ file:leave — guardar y liberar si ya no hay nadie
+socket.on('file:leave', async ({ fileId, userId }) => {
+  socket.leave(`file_${fileId}`);
+  const room = io.sockets.adapter.rooms.get(`file_${fileId}`);
+  if (!room || room.size === 0) {
+    const ydoc = yjsDocs.get(fileId);
+    if (ydoc) {
+      const content = ydoc.getText('content').toString();
+      try {
+        await FileModel.findByIdAndUpdate(fileId, {
+          content,
+          $inc: { version: 1 },
+          updatedAt: new Date()
+        });
+        console.log(`💾 [${fileId}] Guardado y liberado`);
+      } catch (err) {
+        console.error(`❌ Error guardando ${fileId}:`, err);
+      }
+      ydoc.destroy();
+      yjsDocs.delete(fileId);
+    }
+  }
+});
+  });
 
   return io;
 }
-export function getIO() { if (!io) throw new Error("Socket.io no inicializado"); return io; }
+
+export function getIO() { return io; }
