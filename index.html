@@ -540,19 +540,21 @@ async function openFile(file) {
   });
 
   // 4️⃣ ✅ CORRECTO: Observar cambios en Y.Text
-  const observer = (event) => {
-    // Solo enviar si NO es un cambio local (evita loops)
-    if (event.transaction.origin !== 'user-input') {
-      const update = Y.encodeStateAsUpdate(ydoc);
-      socket.emit('yjs-update', { 
-        fileId: currentFileId, 
-        update: Array.from(update) 
-      });
-    }
-    // Siempre actualizar el textarea
-    textarea.value = ytext.toString();
-  };
-  ytext.observe(observer);
+const observer = (event) => {
+  // Enviar SOLO si el cambio viene de la entrada de usuario (evita loops)
+  if (event.transaction && event.transaction.origin === 'user-input') {
+    const update = Y.encodeStateAsUpdate(ydoc);
+    socket.emit('yjs-update', { 
+      fileId: currentFileId, 
+      update: Array.from(update) 
+    });
+  }
+  // Actualizar siempre el textarea con el estado actual
+  textarea.value = ytext.toString();
+};
+ytext.observe(observer);
+
+
 
   // 5️⃣ Sincronizar textarea → Yjs
   let lastContent = textarea.value;

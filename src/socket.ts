@@ -38,27 +38,31 @@ function startAutosave(fileId: string) {
   if (autosaveTimers.has(fileId)) return; // Ya existe
 
   const timer = setInterval(async () => {
-  const ydoc = yjsDocs.get(fileId);
-  if (!ydoc) {
-    stopAutosave(fileId);
-    return;
-  }
+    const ydoc = yjsDocs.get(fileId);
+    if (!ydoc) {
+      stopAutosave(fileId);
+      return;
+    }
 
-  const content = ydoc.getText('content').toString();
-  console.log(`[DEBUG AUTOSAVE ${fileId}] Longitud: ${content.length}, Fragmento: "${content.substring(0, 30)}..."`);
+    const content = ydoc.getText('content').toString();
+    console.log(`[DEBUG AUTOSAVE ${fileId}] Longitud: ${content.length}, Fragmento: "${content.substring(0, 30)}..."`);
 
-  try {
-    await FileModel.findByIdAndUpdate(
-      fileId,
-      { content, $inc: { version: 1 }, updatedAt: new Date() },
-      { new: true }
-    );
-    console.log(`💾 [${fileId}] Autosave guardado`);
-  } catch (err) {
-    console.error(`❌ Error en autosave ${fileId}:`, err);
-  }
-}, 2000);
+    try {
+      await FileModel.findByIdAndUpdate(
+        fileId,
+        { content, $inc: { version: 1 }, updatedAt: new Date() },
+        { new: true }
+      );
+      console.log(`💾 [${fileId}] Autosave guardado`);
+    } catch (err) {
+      console.error(`❌ Error en autosave ${fileId}:`, err);
+    }
+  }, 2000);
+
+  // 🔧 FALTABA ESTO
+  autosaveTimers.set(fileId, timer);
 }
+
 
 function stopAutosave(fileId: string) {
   const timer = autosaveTimers.get(fileId);
